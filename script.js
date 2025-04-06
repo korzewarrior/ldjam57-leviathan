@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.x = Math.random() * 100; // Random horizontal position (percent)
             this.y = 120; // Start below viewport
             this.size = Math.random() * 4 + 2;
-            this.speed = Math.random() * 3 + 2;
+            this.speed = Math.random() * 1.5 + 1; // Reduced from Math.random() * 3 + 2 for better pacing
             this.opacity = Math.random() * 0.5 + 0.3;
         }
         
@@ -111,9 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth) {
-            // Elevator vertical position - now at 30% from top
-            const elevatorTop = 30 - (elevatorHeight / 2);
-            const elevatorBottom = 30 + (elevatorHeight / 2);
+            // Elevator vertical position - now at 20% from top
+            const elevatorTop = 20 - (elevatorHeight / 2);
+            const elevatorBottom = 20 + (elevatorHeight / 2);
             
             // Only check collision when obstacle is near elevator's level (vertically)
             if (this.y > elevatorTop && this.y < elevatorBottom) {
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         obstacles.forEach(obstacle => obstacle.draw(shaft));
         
         // Add new particles based on speed
-        const particleCount = Math.floor(descentSpeed / 2);
+        const particleCount = Math.floor(descentSpeed / 3); // Reduced from Math.floor(descentSpeed / 2) to create fewer particles
         for (let i = 0; i < particleCount; i++) {
             particles.push(new Particle());
         }

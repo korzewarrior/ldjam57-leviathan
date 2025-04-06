@@ -62,7 +62,7 @@ body.braking {
 
 .game-screen {
     justify-content: flex-start;
-    padding-top: 5rem;
+    padding-top: 1rem;
 }
 
 h1 {
@@ -142,7 +142,7 @@ button:hover {
 /* Game Screen Styles */
 .stats {
     position: absolute;
-    top: 2rem;
+    top: 0.5rem;
     left: 0;
     width: 100%;
     display: flex;
@@ -183,7 +183,7 @@ button:hover {
 
 .elevator-shaft {
     width: 100%;
-    height: 80%; /* Increased from 60% for more vertical space */
+    height: 95%; /* Increased from 80% to almost full height */
     border-left: 2px dashed rgba(255, 255, 255, 0.1);
     border-right: 2px dashed rgba(255, 255, 255, 0.1);
     position: relative;
@@ -229,7 +229,7 @@ button:hover {
     height: 60px;
     background-color: var(--accent-color);
     position: absolute;
-    top: 30%; /* Moved up from 50% to have more view below */
+    top: 20%; /* Moved up from 30% for better positioning in taller shaft */
     left: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 0 0 15px rgba(0, 200, 255, 0.7);
@@ -300,7 +300,7 @@ button:hover {
 /* Game instructions */
 .game-instructions {
     position: absolute;
-    top: 6rem;
+    top: 2.5rem;
     width: 100%;
     text-align: center;
     font-size: 1rem;
@@ -376,7 +376,7 @@ button:hover {
 /* Score display */
 .score-display {
     position: absolute;
-    top: 4.5rem;
+    top: 1.5rem;
     width: 100%;
     text-align: center;
     z-index: 100;
