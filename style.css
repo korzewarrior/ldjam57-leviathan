@@ -166,26 +166,42 @@ button:hover {
     z-index: 100;
 }
 
+/* Improved depth display with better spacing */
 .depth-display {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    gap: 5px;
 }
 
-.depth-display span:first-child {
+#playerNameDisplay {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 2px;
+}
+
+.depth-value {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.depth-value span:first-child {
     font-size: 0.9rem;
     opacity: 0.7;
-    margin-bottom: 3px;
 }
 
-.depth-display span:last-child {
-    font-size: 1.2rem;
-    font-weight: 700;
+.depth-value span:last-child {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-left: -2px;
 }
 
 #currentDepth {
     color: var(--depth-color);
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
     text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
 }
 
@@ -200,12 +216,12 @@ button:hover {
 
 .elevator-shaft {
     width: 100%;
-    height: calc(100% - 95px);
+    height: calc(100% - 125px);
     border-left: 2px dashed rgba(255, 255, 255, 0.15);
     border-right: 2px dashed rgba(255, 255, 255, 0.15);
     position: relative;
     margin: 0 auto;
-    margin-top: 35px;
+    margin-top: 0;
     overflow: hidden;
     background-color: rgba(0, 0, 0, 0.3);
     cursor: move;
@@ -327,8 +343,8 @@ button:hover {
 
 /* Game instructions - Ensure proper positioning */
 .game-instructions {
-    position: absolute;
-    top: 57px;
+    position: relative;
+    top: 0;
     left: 0;
     width: 100%;
     text-align: center;
@@ -338,11 +354,11 @@ button:hover {
     z-index: 50;
     text-shadow: 0 0 5px rgba(0, 0, 0, 1);
     background-color: rgba(10, 10, 18, 0.7);
-    padding: 8px 0;
-    border-radius: 4px;
+    padding: 12px 0;
+    border-radius: 6px;
     letter-spacing: 1px;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 25px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     border-top: 1px solid rgba(0, 200, 255, 0.1);
     border-bottom: 1px solid rgba(0, 200, 255, 0.1);
@@ -435,34 +451,36 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
+    padding: 15px;
     color: var(--text-color);
     background-color: rgba(0, 0, 0, 0.8);
     border-radius: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 30px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 200, 255, 0.2);
     z-index: 100;
 }
 
-/* Brake power display */
+/* Brake power display with better alignment */
 .brake-power-container {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 5px;
+    gap: 8px;
 }
 
 .brake-power-container span {
-    font-size: 0.9rem;
-    opacity: 0.7;
+    font-size: 1rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .brake-power-bar-background {
-    width: 170px;
-    height: 12px;
+    width: 180px;
+    height: 14px;
     background-color: rgba(68, 68, 68, 0.6);
-    border-radius: 6px;
+    border-radius: 7px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -471,7 +489,7 @@ button:hover {
     height: 100%;
     width: 100%;
     background-color: var(--success-color);
-    border-radius: 6px;
+    border-radius: 7px;
     transition: width 0.3s ease, background-color 0.3s ease;
     box-shadow: 0 0 8px rgba(64, 255, 188, 0.5);
 }
