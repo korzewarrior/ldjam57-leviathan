@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let difficultyLevel = 1;
     let lastObstacleTime = 0;
     let minObstacleSpacing = 4000; // Increased minimum time between obstacles in ms
-    const movementFactor = 0.2; // Consistency factor for visual movement
+    const movementFactor = 0.15; // Reduced from 0.2 for better visual synchronization
     
     // Classes
     class Particle {
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.x = Math.random() * 100; // Random horizontal position (percent)
             this.y = 120; // Start below viewport
             this.size = Math.random() * 4 + 2;
-            this.speed = Math.random() * 1.5 + 1; // Reduced from Math.random() * 3 + 2 for better pacing
+            this.speed = Math.random() * 0.8 + 0.5; // Significantly reduced speed for better matching with obstacles
             this.opacity = Math.random() * 0.5 + 0.3;
         }
         
@@ -107,15 +107,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth) {
-            // Elevator vertical position - now at 20% from top
-            const elevatorTop = 20 - (elevatorHeight / 2);
-            const elevatorBottom = 20 + (elevatorHeight / 2);
+            // Elevator vertical position - now at 15% from top
+            const elevatorTop = 15 - (elevatorHeight / 2);
+            const elevatorBottom = 15 + (elevatorHeight / 2);
+            
+            // Add a small buffer for collision detection to make it more forgiving (5px)
+            const collisionBuffer = 5;
             
             // Only check collision when obstacle is near elevator's level (vertically)
-            if (this.y > elevatorTop && this.y < elevatorBottom) {
+            // Reduced vertical collision area for more precision
+            const verticalThreshold = this.height / 2;
+            if (Math.abs(this.y - elevatorTop) < verticalThreshold) {
                 // Convert elevator's center position from percentage to actual position
-                const elevatorLeft = (elevatorX / 100) * shaftWidth - (elevatorWidth / 2);
-                const elevatorRight = elevatorLeft + elevatorWidth;
+                const elevatorCenter = (elevatorX / 100) * shaftWidth;
+                const elevatorLeft = elevatorCenter - (elevatorWidth / 2) + collisionBuffer;
+                const elevatorRight = elevatorCenter + (elevatorWidth / 2) - collisionBuffer;
                 
                 // Calculate obstacle edges in actual pixels
                 const gapLeft = (this.gapPosition / 100) * shaftWidth;
@@ -128,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Mark obstacle as passed once it's above the elevator
-            if (this.y < elevatorTop && !this.passed) {
+            if (this.y < elevatorTop - verticalThreshold && !this.passed) {
                 this.passed = true;
                 return false;
             }
