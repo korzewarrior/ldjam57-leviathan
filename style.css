@@ -64,6 +64,14 @@ body.braking {
     padding: 1rem;
     position: relative;
     overflow: hidden;
+    
+    /* Prevent dragging behavior */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .welcome-screen, .game-screen, .results-screen {
@@ -237,6 +245,14 @@ button:hover {
     transition: all 0.2s ease;
     border-radius: 8px;
     
+    /* Prevent dragging behavior */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    
     /* Enhanced depth effect using gradients */
     background-image: 
         linear-gradient(to bottom, 
@@ -282,6 +298,13 @@ button:hover {
     z-index: 10;
     border-radius: 6px;
     transition: all 0.2s ease-out;
+    
+    /* Prevent dragging behavior */
+    -webkit-user-drag: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    draggable: false;
     
     /* Add elevator details */
     background-image: 

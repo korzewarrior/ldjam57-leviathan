@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const leaderboardList = document.getElementById('leaderboardList');
     const elevatorElement = document.getElementById('elevator');
     
+    // Prevent any dragging behavior that might interfere with gameplay
+    document.addEventListener('dragstart', e => e.preventDefault());
+    document.addEventListener('drag', e => e.preventDefault());
+    document.addEventListener('drop', e => e.preventDefault());
+    document.addEventListener('dragover', e => e.preventDefault());
+    
     // Game variables
     let playerName = '';
     let currentDepth = 0;
