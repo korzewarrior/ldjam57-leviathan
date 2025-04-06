@@ -15,6 +15,10 @@
                 <input type="text" id="playerName" placeholder="ENTER YOUR NAME" maxlength="15">
                 <button id="startButton">BEGIN DESCENT</button>
             </div>
+            <p style="font-size: 0.9rem; margin-top: 1rem;">
+                HOLD BUTTON to accelerate<br>
+                MOVE MOUSE to dodge obstacles
+            </p>
         </div>
 
         <div class="game-screen hidden" id="gameScreen">
@@ -29,12 +33,16 @@
                 </div>
             </div>
             
+            <div class="game-instructions">
+                Move horizontally to navigate through gaps
+            </div>
+            
             <div class="elevator-shaft">
                 <div class="elevator" id="elevator"></div>
             </div>
             
             <div class="controls">
-                <button id="descentButton" class="descent-button">HOLD TO DESCEND</button>
+                <button id="descentButton" class="descent-button">HOLD TO ACCELERATE</button>
             </div>
         </div>
 

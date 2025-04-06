@@ -17,21 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game variables
     let playerName = '';
     let currentDepth = 0;
-    let isDescending = false;
     let descentSpeed = 0;
-    let descentAcceleration = 0.05;
+    let minSpeed = 2; // Minimum speed when not accelerating
     let maxSpeed = 15;
-    let descentInterval;
-    let slowDownInterval;
-    let gameActive = false;
-    let startTime;
+    let acceleration = 0.1;
+    let deceleration = 0.05;
+    let isAccelerating = false;
+    let gameInterval;
+    let obstacleInterval;
     let difficultyTimer;
-    let inactivityTimer;
+    let gameActive = false;
     let leaderboard = [];
-    
-    // Visual effects variables
-    let shaftHeight;
+    let shaftWidth; // Width of the elevator shaft
+    let shaftHeight; // Height of the elevator shaft
+    let elevatorX = 50; // % position horizontally
+    let elevatorWidth = 60; // px
+    let obstacles = [];
     let particles = [];
+    let lastMouseX = 0;
+    let difficultyLevel = 1;
     
     // Classes
     class Particle {
@@ -57,6 +61,69 @@ document.addEventListener('DOMContentLoaded', () => {
             particle.style.height = `${this.size}px`;
             particle.style.opacity = this.opacity;
             container.appendChild(particle);
+        }
+    }
+    
+    class Obstacle {
+        constructor(difficulty) {
+            this.width = Math.random() * 30 + 20; // Width between 20% and 50% of shaft
+            // Gap is inversely proportional to difficulty (harder = smaller gap)
+            this.gapWidth = Math.max(30 - (difficulty * 2), 15); // % of width
+            this.gapPosition = Math.random() * (100 - this.gapWidth); // % position of gap
+            this.y = 120; // Start below viewport
+            this.passed = false;
+            this.counted = false;
+        }
+        
+        update(speed) {
+            this.y -= speed;
+            return this.y > -20; // Return true if obstacle still in view
+        }
+        
+        draw(container) {
+            // Left part of obstacle
+            const leftPart = document.createElement('div');
+            leftPart.className = 'obstacle';
+            leftPart.style.left = '0';
+            leftPart.style.top = `${this.y}%`;
+            leftPart.style.width = `${this.gapPosition}%`;
+            leftPart.style.height = '15px';
+            
+            // Right part of obstacle
+            const rightPart = document.createElement('div');
+            rightPart.className = 'obstacle';
+            rightPart.style.left = `${this.gapPosition + this.gapWidth}%`;
+            rightPart.style.top = `${this.y}%`;
+            rightPart.style.width = `${100 - (this.gapPosition + this.gapWidth)}%`;
+            rightPart.style.height = '15px';
+            
+            container.appendChild(leftPart);
+            container.appendChild(rightPart);
+        }
+        
+        checkCollision(elevatorX, elevatorWidth, shaftWidth) {
+            // Only check collision when obstacle is at elevator's level (vertically)
+            if (this.y > 45 && this.y < 55) {
+                // Convert elevator's center position from percentage to actual position
+                const elevatorLeft = (elevatorX / 100) * shaftWidth;
+                const elevatorRight = elevatorLeft + elevatorWidth;
+                
+                // Calculate obstacle edges in actual pixels
+                const gapLeft = (this.gapPosition / 100) * shaftWidth;
+                const gapRight = ((this.gapPosition + this.gapWidth) / 100) * shaftWidth;
+                
+                // Check if elevator is within the gap
+                if (elevatorRight < gapLeft || elevatorLeft > gapRight) {
+                    return true; // Collision detected
+                }
+            }
+            
+            // Mark obstacle as passed once it's above the elevator
+            if (this.y < 45 && !this.passed) {
+                this.passed = true;
+            }
+            
+            return false;
         }
     }
     
@@ -159,14 +226,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return playerRank < 10;
     }
     
-    // Create particles for speed effect
-    function createParticles() {
+    // Create and update particles
+    function updateParticles() {
         const shaft = document.querySelector('.elevator-shaft');
         shaft.innerHTML = '';
         shaft.appendChild(elevatorElement);
         
+        // Draw obstacles
+        obstacles.forEach(obstacle => obstacle.draw(shaft));
+        
         // Add new particles based on speed
-        const particleCount = Math.floor(descentSpeed);
+        const particleCount = Math.floor(descentSpeed / 2);
         for (let i = 0; i < particleCount; i++) {
             particles.push(new Particle());
         }
@@ -186,6 +256,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Update elevator horizontal position based on mouse
+    function updateElevatorPosition(mouseX) {
+        if (!gameActive) return;
+        
+        const shaft = document.querySelector('.elevator-shaft');
+        const shaftRect = shaft.getBoundingClientRect();
+        
+        // Calculate elevator width and position relative to shaft width
+        const relativePosition = ((mouseX - shaftRect.left) / shaftRect.width) * 100;
+        
+        // Constraint elevator position to stay within shaft
+        elevatorX = Math.max(0, Math.min(100, relativePosition));
+        
+        // Convert from percentage to pixel position, accounting for elevator width
+        const elevatorLeftPos = (elevatorX / 100) * shaftRect.width - (elevatorWidth / 2);
+        
+        // Update elevator position
+        elevatorElement.style.left = `${elevatorX}%`;
+        elevatorElement.style.transform = 'translate(-50%, -50%)';
+    }
+    
     // Start the game
     function startGame() {
         playerName = playerNameInput.value.trim() || 'ANONYMOUS';
@@ -194,67 +285,108 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
         
-        // Clear any existing particles
+        // Change the descent button text
+        descentButton.textContent = 'HOLD TO ACCELERATE';
+        
+        // Get shaft dimensions
         const shaft = document.querySelector('.elevator-shaft');
         shaft.innerHTML = '';
         shaft.appendChild(elevatorElement);
-        particles = [];
+        
+        shaftHeight = shaft.offsetHeight;
+        shaftWidth = shaft.offsetWidth;
         
         // Reset game variables
         currentDepth = 0;
-        descentSpeed = 0;
-        isDescending = false;
+        descentSpeed = minSpeed;
         gameActive = true;
+        isAccelerating = false;
+        obstacles = [];
+        particles = [];
+        difficultyLevel = 1;
+        
+        // Update display
         currentDepthDisplay.textContent = '0';
         
-        shaftHeight = document.querySelector('.elevator-shaft').offsetHeight;
-        
-        // Clear any existing timers
-        if (descentInterval) clearInterval(descentInterval);
-        if (slowDownInterval) clearInterval(slowDownInterval);
+        // Clear any existing intervals
+        if (gameInterval) clearInterval(gameInterval);
+        if (obstacleInterval) clearInterval(obstacleInterval);
         if (difficultyTimer) clearInterval(difficultyTimer);
-        if (inactivityTimer) clearTimeout(inactivityTimer);
         
-        startTime = Date.now();
-        
-        // Set up game loop for particle effects
-        descentInterval = setInterval(() => {
-            if (gameActive) {
-                createParticles();
+        // Set up the main game loop
+        gameInterval = setInterval(() => {
+            if (!gameActive) return;
+            
+            // Update speed based on acceleration state
+            if (isAccelerating) {
+                descentSpeed = Math.min(descentSpeed + acceleration, maxSpeed);
+            } else {
+                descentSpeed = Math.max(descentSpeed - deceleration, minSpeed);
             }
+            
+            // Update depth
+            currentDepth += descentSpeed / 10;
+            currentDepthDisplay.textContent = Math.floor(currentDepth);
+            
+            // Update visual elements
+            updateParticles();
+            
+            // Check for obstacle collisions
+            let collision = false;
+            obstacles = obstacles.filter(obstacle => {
+                // Update obstacle position
+                const stillVisible = obstacle.update(descentSpeed / 10);
+                
+                // Check for collision
+                if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, shaftWidth)) {
+                    collision = true;
+                }
+                
+                // Count passed obstacles for score/difficulty
+                if (obstacle.passed && !obstacle.counted) {
+                    obstacle.counted = true;
+                }
+                
+                return stillVisible;
+            });
+            
+            // Game over on collision
+            if (collision) {
+                endGame();
+            }
+            
         }, 50);
         
-        // Set difficulty increase timer
+        // Generate new obstacles periodically
+        obstacleInterval = setInterval(() => {
+            if (gameActive && obstacles.length < 5) {
+                obstacles.push(new Obstacle(difficultyLevel));
+            }
+        }, 2000);
+        
+        // Increase difficulty level over time
         difficultyTimer = setInterval(() => {
             if (gameActive) {
-                // Increase max speed every 10 seconds
-                maxSpeed += 2;
+                difficultyLevel = Math.min(difficultyLevel + 0.5, 10);
+                maxSpeed = Math.min(maxSpeed + 1, 30);
+                
                 // Flash the depth display to indicate difficulty increase
                 currentDepthDisplay.style.color = 'var(--danger-color)';
                 setTimeout(() => {
                     currentDepthDisplay.style.color = 'var(--depth-color)';
                 }, 200);
             }
-        }, 10000);
-        
-        // Set maximum game duration (3 minutes)
-        setTimeout(() => {
-            if (gameActive) {
-                endGame();
-            }
-        }, 180000); // 3 minutes
+        }, 15000);
     }
     
     // End the game and show results
     function endGame() {
         gameActive = false;
-        isDescending = false;
         
         // Clear all intervals
-        if (descentInterval) clearInterval(descentInterval);
-        if (slowDownInterval) clearInterval(slowDownInterval);
+        if (gameInterval) clearInterval(gameInterval);
+        if (obstacleInterval) clearInterval(obstacleInterval);
         if (difficultyTimer) clearInterval(difficultyTimer);
-        if (inactivityTimer) clearTimeout(inactivityTimer);
         
         gameScreen.classList.add('hidden');
         resultsScreen.classList.remove('hidden');
@@ -273,77 +405,37 @@ document.addEventListener('DOMContentLoaded', () => {
         displayLeaderboard();
     }
     
-    // Handle descent button press
-    function startDescent() {
-        if (!isDescending && gameActive) {
-            isDescending = true;
-            
-            // Clear any existing inactivity timer
-            if (inactivityTimer) {
-                clearTimeout(inactivityTimer);
-                inactivityTimer = null;
-            }
-            
-            // Process descent
-            const updateInterval = setInterval(() => {
-                if (isDescending && gameActive) {
-                    // Increase speed with acceleration, up to max speed
-                    descentSpeed = Math.min(descentSpeed + descentAcceleration, maxSpeed);
-                    
-                    // Update depth
-                    currentDepth += descentSpeed;
-                    currentDepthDisplay.textContent = Math.floor(currentDepth);
-                } else {
-                    clearInterval(updateInterval);
-                }
-            }, 50);
-        }
-    }
-    
-    // Handle descent button release
-    function stopDescent() {
-        if (isDescending) {
-            isDescending = false;
-            
-            // Decrease speed gradually
-            slowDownInterval = setInterval(() => {
-                descentSpeed = Math.max(descentSpeed - 0.2, 0);
-                
-                // Update depth
-                if (descentSpeed > 0) {
-                    currentDepth += descentSpeed;
-                    currentDepthDisplay.textContent = Math.floor(currentDepth);
-                } else {
-                    clearInterval(slowDownInterval);
-                    
-                    // Set inactivity timer - end game after 3 seconds of inactivity
-                    if (gameActive && !inactivityTimer) {
-                        inactivityTimer = setTimeout(() => {
-                            if (gameActive && !isDescending) {
-                                console.log("Ending game due to inactivity");
-                                endGame();
-                            }
-                        }, 3000);
-                    }
-                }
-            }, 50);
-        }
-    }
-    
-    // Add event listeners
+    // Event listeners
     startButton.addEventListener('click', startGame);
-    descentButton.addEventListener('mousedown', startDescent);
+    
+    // Hold button to accelerate
+    descentButton.addEventListener('mousedown', () => {
+        isAccelerating = true;
+    });
     descentButton.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevent double events
-        startDescent();
+        e.preventDefault();
+        isAccelerating = true;
     });
     
-    document.addEventListener('mouseup', stopDescent);
-    document.addEventListener('touchend', (e) => {
-        if (e.target === descentButton) {
-            e.preventDefault();
+    document.addEventListener('mouseup', () => {
+        isAccelerating = false;
+    });
+    document.addEventListener('touchend', () => {
+        isAccelerating = false;
+    });
+    
+    // Mouse movement to control elevator
+    document.addEventListener('mousemove', (e) => {
+        lastMouseX = e.clientX;
+        updateElevatorPosition(lastMouseX);
+    });
+    
+    // Touch movement for mobile
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            lastMouseX = e.touches[0].clientX;
+            updateElevatorPosition(lastMouseX);
         }
-        stopDescent();
     });
     
     playAgainButton.addEventListener('click', () => {

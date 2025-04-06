@@ -5,17 +5,18 @@ A sleek, minimal web game created for Ludum Dare 57 with the theme "Depths".
 ## How to Play
 
 1. Enter your name (or play anonymously)
-2. Press and **HOLD** the "HOLD TO DESCEND" button to go deeper
-3. The longer you hold, the faster you'll descend
-4. Release to slow down
-5. After 3 seconds of inactivity, your descent ends
-6. Try to reach the deepest depth possible!
+2. **HOLD** the button to accelerate deeper
+3. **MOVE** your mouse/finger to navigate horizontally
+4. Dodge obstacles by moving through the gaps
+5. Go as deep as you can without crashing!
+6. The deeper you go, the higher your score
 
 ## Features
 
 - Minimalist sleek design
-- Hold-to-descend mechanics
-- Increasing difficulty over time
+- Hold-to-accelerate mechanics with dodge obstacles
+- Mouse/touch controls for horizontal movement
+- Increasing difficulty over time (faster speed, narrower gaps)
 - Local leaderboard system
 - Responsive design for both desktop and mobile
 
@@ -25,8 +26,8 @@ Simply open `index.html` in your web browser to play!
 
 ## Controls
 
-- **Desktop**: Click and hold the descent button with your mouse
-- **Mobile**: Touch and hold the descent button
+- **Desktop**: Hold button to accelerate, move mouse to navigate
+- **Mobile**: Hold button to accelerate, touch and drag to navigate
 
 ## Technical Details
 
