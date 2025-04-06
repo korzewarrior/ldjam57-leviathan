@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerNameDisplay = document.getElementById('playerNameDisplay');
     const currentDepthDisplay = document.getElementById('currentDepth');
     const finalDepthDisplay = document.getElementById('finalDepth');
+    const scoreDisplay = document.getElementById('scoreValue');
+    const finalScoreDisplay = document.getElementById('finalScore');
     const playAgainButton = document.getElementById('playAgainButton');
     const highScoreMessage = document.getElementById('highScoreMessage');
     const leaderboardList = document.getElementById('leaderboardList');
@@ -16,11 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game variables
     let playerName = '';
     let currentDepth = 0;
+    let score = 0;
     let descentSpeed = 0;
-    let minSpeed = 2; // Minimum speed when braking hard
-    let maxSpeed = 15;
-    let acceleration = 0.1;
-    let deceleration = 0.2; // Increased for better braking
+    let minSpeed = 3; // Minimum speed when braking hard (increased for better gameplay)
+    let maxSpeed = 20; // Increased for more exciting gameplay
+    let acceleration = 0.15;
+    let deceleration = 0.3; // Increased for better braking
     let isBraking = false;
     let gameInterval;
     let obstacleInterval;
@@ -31,12 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let shaftHeight; // Height of the elevator shaft
     let elevatorX = 50; // % position horizontally
     let elevatorWidth = 60; // px
+    let elevatorHeight = 60; // px
     let obstacles = [];
     let particles = [];
     let lastMouseX = 0;
     let difficultyLevel = 1;
     let lastObstacleTime = 0;
-    let minObstacleSpacing = 3000; // Minimum time between obstacles in ms
+    let minObstacleSpacing = 4000; // Increased minimum time between obstacles in ms
+    const movementFactor = 0.2; // Consistency factor for visual movement
     
     // Classes
     class Particle {
@@ -49,7 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         update(speedMultiplier) {
-            this.y -= this.speed * speedMultiplier; // Move upward instead of downward
+            // Use the same movement factor as obstacles for visual consistency
+            this.y -= this.speed * speedMultiplier * movementFactor;
             return this.y > -20; // Return true if particle still in view
         }
         
@@ -69,15 +75,17 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(difficulty) {
             this.width = Math.random() * 30 + 20; // Width between 20% and 50% of shaft
             // Gap is inversely proportional to difficulty (harder = smaller gap)
-            this.gapWidth = Math.max(30 - (difficulty * 2), 15); // % of width
+            this.gapWidth = Math.max(30 - (difficulty * 1.5), 20); // Made gaps slightly larger for better playability
             this.gapPosition = Math.random() * (100 - this.gapWidth); // % position of gap
             this.y = 120; // Start below viewport
             this.passed = false;
             this.counted = false;
+            this.height = 15 + Math.random() * 5; // Varied height for more visual interest
         }
         
-        update(speed) {
-            this.y -= speed;
+        update(speedMultiplier) {
+            // Use a consistent movement factor for visual cohesion
+            this.y -= speedMultiplier * movementFactor;
             return this.y > -20; // Return true if obstacle still in view
         }
         
@@ -88,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             leftPart.style.left = '0';
             leftPart.style.top = `${this.y}%`;
             leftPart.style.width = `${this.gapPosition}%`;
-            leftPart.style.height = '15px';
+            leftPart.style.height = `${this.height}px`;
             
             // Right part of obstacle
             const rightPart = document.createElement('div');
@@ -96,15 +104,19 @@ document.addEventListener('DOMContentLoaded', () => {
             rightPart.style.left = `${this.gapPosition + this.gapWidth}%`;
             rightPart.style.top = `${this.y}%`;
             rightPart.style.width = `${100 - (this.gapPosition + this.gapWidth)}%`;
-            rightPart.style.height = '15px';
+            rightPart.style.height = `${this.height}px`;
             
             container.appendChild(leftPart);
             container.appendChild(rightPart);
         }
         
-        checkCollision(elevatorX, elevatorWidth, shaftWidth) {
-            // Only check collision when obstacle is at elevator's level (vertically)
-            if (this.y > 45 && this.y < 55) {
+        checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth) {
+            // Elevator vertical position - now at 30% from top
+            const elevatorTop = 30 - (elevatorHeight / 2);
+            const elevatorBottom = 30 + (elevatorHeight / 2);
+            
+            // Only check collision when obstacle is near elevator's level (vertically)
+            if (this.y > elevatorTop && this.y < elevatorBottom) {
                 // Convert elevator's center position from percentage to actual position
                 const elevatorLeft = (elevatorX / 100) * shaftWidth - (elevatorWidth / 2);
                 const elevatorRight = elevatorLeft + elevatorWidth;
@@ -120,8 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Mark obstacle as passed once it's above the elevator
-            if (this.y < 45 && !this.passed) {
+            if (this.y < elevatorTop && !this.passed) {
                 this.passed = true;
+                return false;
             }
             
             return false;
@@ -202,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newScore = {
             name: playerName,
             depth: depth,
+            score: score,
             date: new Date().toISOString()
         };
         
@@ -227,6 +241,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return playerRank < 10;
     }
     
+    // Create score popup effect
+    function createScorePopup(points, x, y) {
+        const shaft = document.querySelector('.elevator-shaft');
+        const popup = document.createElement('div');
+        popup.className = 'score-popup';
+        popup.textContent = `+${points}`;
+        popup.style.left = `${x}%`;
+        popup.style.top = `${y}%`;
+        shaft.appendChild(popup);
+        
+        // Remove popup after animation
+        setTimeout(() => {
+            if (popup.parentNode === shaft) {
+                shaft.removeChild(popup);
+            }
+        }, 1500);
+    }
+    
     // Create and update particles
     function updateParticles() {
         const shaft = document.querySelector('.elevator-shaft');
@@ -244,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update and draw existing particles
         particles = particles.filter(particle => {
-            const stillVisible = particle.update(descentSpeed / 5);
+            const stillVisible = particle.update(descentSpeed);
             if (stillVisible) {
                 particle.draw(shaft);
             }
@@ -252,8 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Limit particles array size
-        if (particles.length > 100) {
-            particles = particles.slice(-100);
+        if (particles.length > 150) {
+            particles = particles.slice(-150);
         }
     }
     
@@ -284,8 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
             obstacles.push(new Obstacle(difficultyLevel));
             lastObstacleTime = currentTime;
             
-            // Adjust spacing based on difficulty
-            minObstacleSpacing = Math.max(1500, 3000 - (difficultyLevel * 150));
+            // Adjust spacing based on difficulty (but keep it playable)
+            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 200));
         }
     }
     
@@ -324,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset game variables
         currentDepth = 0;
+        score = 0;
         descentSpeed = maxSpeed / 2; // Start at medium speed
         gameActive = true;
         isBraking = false;
@@ -331,10 +364,11 @@ document.addEventListener('DOMContentLoaded', () => {
         particles = [];
         difficultyLevel = 1;
         lastObstacleTime = 0;
-        minObstacleSpacing = 3000;
+        minObstacleSpacing = 4000;
         
-        // Update display
+        // Update displays
         currentDepthDisplay.textContent = '0';
+        scoreDisplay.textContent = '0';
         
         // Clear any existing intervals
         if (gameInterval) clearInterval(gameInterval);
@@ -355,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update visuals for braking
             updateBrakingVisuals();
             
-            // Update depth
+            // Update depth (depends on speed)
             currentDepth += descentSpeed / 10;
             currentDepthDisplay.textContent = Math.floor(currentDepth);
             
@@ -366,16 +400,22 @@ document.addEventListener('DOMContentLoaded', () => {
             let collision = false;
             obstacles = obstacles.filter(obstacle => {
                 // Update obstacle position
-                const stillVisible = obstacle.update(descentSpeed / 10);
+                const stillVisible = obstacle.update(descentSpeed);
                 
                 // Check for collision
-                if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, shaftWidth)) {
+                if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth)) {
                     collision = true;
                 }
                 
-                // Count passed obstacles for score/difficulty
+                // Award points for cleared obstacles
                 if (obstacle.passed && !obstacle.counted) {
                     obstacle.counted = true;
+                    const pointsGained = Math.ceil(descentSpeed * 10); // More speed = more points
+                    score += pointsGained;
+                    scoreDisplay.textContent = score;
+                    
+                    // Show score popup at obstacle position
+                    createScorePopup(pointsGained, elevatorX, 25); // Just above elevator
                 }
                 
                 return stillVisible;
@@ -390,10 +430,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Generate new obstacles periodically
         obstacleInterval = setInterval(() => {
-            if (gameActive && obstacles.length < 5) {
+            if (gameActive && obstacles.length < 8) { // Allow more obstacles with larger shaft
                 generateObstacle();
             }
-        }, 500); // Check more frequently but actual spawning is controlled by minObstacleSpacing
+        }, 500); // Check frequently but actual spawning is controlled by minObstacleSpacing
         
         // Increase difficulty level over time
         difficultyTimer = setInterval(() => {
@@ -405,6 +445,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentDepthDisplay.style.color = 'var(--danger-color)';
                 setTimeout(() => {
                     currentDepthDisplay.style.color = 'var(--depth-color)';
+                }, 200);
+                
+                // Also flash score to indicate difficulty increase
+                scoreDisplay.style.color = 'var(--danger-color)';
+                setTimeout(() => {
+                    scoreDisplay.style.color = 'var(--success-color)';
                 }, 200);
             }
         }, 15000);
@@ -424,6 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const finalDepth = Math.floor(currentDepth);
         finalDepthDisplay.textContent = finalDepth;
+        finalScoreDisplay.textContent = score;
         
         // Check if it's a high score
         const isHighScore = checkHighScore(currentDepth);
