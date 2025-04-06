@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerName = '';
     let currentDepth = 0;
     let descentSpeed = 0;
-    let minSpeed = 3; // Minimum speed when braking hard (increased for better gameplay)
-    let maxSpeed = 20; // Increased for more exciting gameplay
-    let acceleration = 0.15;
-    let deceleration = 0.3; // Increased for better braking
+    let minSpeed = 2; // Reduced from 3 for better control when braking
+    let maxSpeed = 12; // Reduced from 20 for more manageable gameplay
+    let acceleration = 0.08; // Reduced from 0.15 for slower acceleration
+    let deceleration = 0.3;
     let isBraking = false;
     let gameInterval;
     let obstacleInterval;
@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Brake power variables
     let maxBrakePower = 100;
     let brakePower = maxBrakePower;
-    let brakePowerConsumptionRate = 1; // How fast braking consumes power
-    let brakePowerRegenRate = 0.3; // How fast power regenerates when not braking
+    let brakePowerConsumptionRate = 0.7; // Reduced consumption rate for more braking time
+    let brakePowerRegenRate = 0.4; // Increased regeneration rate for better gameplay balance
     let canBrake = true; // Whether the player can currently brake
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
@@ -79,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(difficulty) {
             this.width = Math.random() * 30 + 20; // Width between 20% and 50% of shaft
             // Gap is inversely proportional to difficulty (harder = smaller gap)
-            this.gapWidth = Math.max(30 - (difficulty * 1.5), 20); // Made gaps slightly larger for better playability
+            // More balanced gap width calculation with a higher minimum
+            this.gapWidth = Math.max(35 - (difficulty * 1.2), 22); // Increased min gap width for better playability
             this.gapPosition = Math.random() * (100 - this.gapWidth); // % position of gap
             this.y = 120; // Start below viewport
             this.passed = false;
@@ -330,11 +331,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if minimum spacing has passed
         if (currentTime - lastObstacleTime >= minObstacleSpacing) {
-            obstacles.push(new Obstacle(difficultyLevel));
+            // Create a new obstacle with adjusted gap width for more balanced difficulty
+            const obstacle = new Obstacle(difficultyLevel);
+            
+            // Ensure gap width is not too small early in the game
+            if (difficultyLevel < 3) {
+                obstacle.gapWidth = Math.max(obstacle.gapWidth, 25); // Ensure a minimum gap width for early levels
+            }
+            
+            obstacles.push(obstacle);
             lastObstacleTime = currentTime;
             
             // Adjust spacing based on difficulty (but keep it playable)
-            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 200));
+            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 175));
         }
     }
     
@@ -403,8 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     canBrake = false;
                 }
                 
-                // Apply braking effect to speed
-                descentSpeed = Math.max(minSpeed, descentSpeed * 0.95);
+                // Apply stronger braking effect to speed
+                descentSpeed = Math.max(minSpeed, descentSpeed * 0.92); // Stronger deceleration
             } else {
                 // Regenerate brake power when not braking
                 if (brakePower < maxBrakePower) {
@@ -414,13 +423,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     // Re-enable braking if power is sufficient
-                    if (!canBrake && brakePower >= maxBrakePower * 0.25) {
+                    if (!canBrake && brakePower >= maxBrakePower * 0.2) { // Reduced from 0.25 to re-enable braking sooner
                         canBrake = true;
                     }
                 }
                 
-                // Increase speed when not braking
-                descentSpeed = Math.min(maxSpeed, descentSpeed * 1.01);
+                // More gradual acceleration when not braking
+                descentSpeed = Math.min(maxSpeed, descentSpeed * 1.008); // Reduced from 1.01 for slower acceleration
             }
             
             // Update brake power display
@@ -469,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset game variables
         currentDepth = 0;
-        descentSpeed = maxSpeed / 2; // Start at medium speed
+        descentSpeed = maxSpeed / 3; // Start at lower speed (was maxSpeed/2)
         gameActive = true;
         isBraking = false;
         obstacles = [];
@@ -579,10 +588,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Directly restart the game when clicking "play again"
     playAgainButton.addEventListener('click', () => {
         resultsScreen.classList.add('hidden');
-        welcomeScreen.classList.remove('hidden');
-        playerNameInput.value = playerName;
+        // Skip the welcome screen entirely
+        startGame(); // Directly restart the game with the same player name
     });
     
     // Prevent context menu on long press
@@ -647,16 +657,17 @@ document.addEventListener('DOMContentLoaded', () => {
         difficultyTimer = setInterval(() => {
             if (!gameActive) return;
             
-            difficultyLevel += 0.5;
+            // More gradual difficulty increase
+            difficultyLevel += 0.3; // Reduced from 0.5
             
-            // As difficulty increases, reduce minimum obstacle spacing
-            minObstacleSpacing = Math.max(1500, 4000 - (difficultyLevel * 250));
+            // As difficulty increases, reduce minimum obstacle spacing more gradually
+            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 175)); // More gradual spacing reduction
             
-            // Increase max speed with difficulty
-            maxSpeed = Math.min(25, 10 + (difficultyLevel * 0.5));
+            // Increase max speed more slowly with difficulty
+            maxSpeed = Math.min(18, 8 + (difficultyLevel * 0.4)); // Slower speed increase, lower overall cap
             
             console.log(`Difficulty increased to ${difficultyLevel}, spacing: ${minObstacleSpacing}, max speed: ${maxSpeed}`);
             
-        }, 15000); // Increase difficulty every 15 seconds
+        }, 20000); // Increased from 15000 - difficulty increases every 20 seconds instead of 15
     }
 }); 
