@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEEP DESCENT | LD57</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1>DEEP<br>DESCENT</h1>
+            <p>How deep can you go?</p>
+            <div class="input-container">
+                <input type="text" id="playerName" placeholder="ENTER YOUR NAME" maxlength="15">
+                <button id="startButton">BEGIN DESCENT</button>
+            </div>
+        </div>
+
+        <div class="game-screen hidden" id="gameScreen">
+            <div class="stats">
+                <div class="depth-display">
+                    <span id="depthLabel">DEPTH</span>
+                    <span id="currentDepth">0</span>
+                    <span id="depthUnit">m</span>
+                </div>
+                <div class="player-info">
+                    <span id="playerNameDisplay"></span>
+                </div>
+            </div>
+            
+            <div class="elevator-shaft">
+                <div class="elevator" id="elevator"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="descentButton" class="descent-button">HOLD TO DESCEND</button>
+            </div>
+        </div>
+
+        <div class="results-screen hidden" id="resultsScreen">
+            <h2>DESCENT COMPLETE</h2>
+            <p>You reached a depth of <span id="finalDepth">0</span>m</p>
+            <div class="high-score-message" id="highScoreMessage"></div>
+            
+            <div class="leaderboard">
+                <h3>DEEPEST DESCENTS</h3>
+                <div id="leaderboardList"></div>
+            </div>
+            
+            <button id="playAgainButton">DESCEND AGAIN</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
