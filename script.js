@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Brake power variables
     let maxBrakePower = 100;
     let brakePower = maxBrakePower;
-    let brakePowerConsumptionRate = 0.7; // Reduced from 0.9 for less aggressive consumption
-    let brakePowerRegenRate = 0.3; // Reduced from 0.5 for more gradual regeneration
+    let brakePowerConsumptionRate = 1.0; // Increased from.0.7 for more strategic braking management
+    let brakePowerRegenRate = 0.3; // Maintained the same regeneration rate
     let canBrake = true; // Whether the player can currently brake
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
@@ -576,8 +576,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         canBrake = false;
                     }
                     
-                    // Less powerful braking - reduced effectiveness values
-                    const brakeEffectiveness = Math.min(0.06, 0.03 + (descentSpeed / 200));
+                    // Even less powerful braking - significantly reduced effectiveness values
+                    const brakeEffectiveness = Math.min(0.03, 0.015 + (descentSpeed / 400));
                     descentSpeed = Math.max(minSpeed, descentSpeed * (1 - brakeEffectiveness));
                 } else {
                     // Regenerate brake power when not braking - make it dependent on speed
