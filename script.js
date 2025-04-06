@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerNameDisplay = document.getElementById('playerNameDisplay');
     const currentDepthDisplay = document.getElementById('currentDepth');
     const finalDepthDisplay = document.getElementById('finalDepth');
-    const scoreDisplay = document.getElementById('scoreValue');
-    const finalScoreDisplay = document.getElementById('finalScore');
     const playAgainButton = document.getElementById('playAgainButton');
     const highScoreMessage = document.getElementById('highScoreMessage');
     const leaderboardList = document.getElementById('leaderboardList');
@@ -18,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game variables
     let playerName = '';
     let currentDepth = 0;
-    let score = 0;
     let descentSpeed = 0;
     let minSpeed = 3; // Minimum speed when braking hard (increased for better gameplay)
     let maxSpeed = 20; // Increased for more exciting gameplay
@@ -79,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.gapPosition = Math.random() * (100 - this.gapWidth); // % position of gap
             this.y = 120; // Start below viewport
             this.passed = false;
-            this.counted = false;
             this.height = 15 + Math.random() * 5; // Varied height for more visual interest
         }
         
@@ -215,12 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const newScore = {
             name: playerName,
             depth: depth,
-            score: score,
             date: new Date().toISOString()
         };
         
         leaderboard.push(newScore);
-        console.log('Added new score:', newScore);
+        console.log('Added new record:', newScore);
         
         // Sort leaderboard
         const sortedLeaderboard = [...leaderboard].sort((a, b) => b.depth - a.depth);
@@ -239,24 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Return true if score is in top 10
         return playerRank < 10;
-    }
-    
-    // Create score popup effect
-    function createScorePopup(points, x, y) {
-        const shaft = document.querySelector('.elevator-shaft');
-        const popup = document.createElement('div');
-        popup.className = 'score-popup';
-        popup.textContent = `+${points}`;
-        popup.style.left = `${x}%`;
-        popup.style.top = `${y}%`;
-        shaft.appendChild(popup);
-        
-        // Remove popup after animation
-        setTimeout(() => {
-            if (popup.parentNode === shaft) {
-                shaft.removeChild(popup);
-            }
-        }, 1500);
     }
     
     // Create and update particles
@@ -356,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset game variables
         currentDepth = 0;
-        score = 0;
         descentSpeed = maxSpeed / 2; // Start at medium speed
         gameActive = true;
         isBraking = false;
@@ -368,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update displays
         currentDepthDisplay.textContent = '0';
-        scoreDisplay.textContent = '0';
         
         // Clear any existing intervals
         if (gameInterval) clearInterval(gameInterval);
@@ -407,17 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     collision = true;
                 }
                 
-                // Award points for cleared obstacles
-                if (obstacle.passed && !obstacle.counted) {
-                    obstacle.counted = true;
-                    const pointsGained = Math.ceil(descentSpeed * 10); // More speed = more points
-                    score += pointsGained;
-                    scoreDisplay.textContent = score;
-                    
-                    // Show score popup at obstacle position
-                    createScorePopup(pointsGained, elevatorX, 25); // Just above elevator
-                }
-                
                 return stillVisible;
             });
             
@@ -446,12 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     currentDepthDisplay.style.color = 'var(--depth-color)';
                 }, 200);
-                
-                // Also flash score to indicate difficulty increase
-                scoreDisplay.style.color = 'var(--danger-color)';
-                setTimeout(() => {
-                    scoreDisplay.style.color = 'var(--success-color)';
-                }, 200);
             }
         }, 15000);
     }
@@ -470,7 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const finalDepth = Math.floor(currentDepth);
         finalDepthDisplay.textContent = finalDepth;
-        finalScoreDisplay.textContent = score;
         
         // Check if it's a high score
         const isHighScore = checkHighScore(currentDepth);

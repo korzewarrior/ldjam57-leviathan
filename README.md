@@ -18,7 +18,7 @@ A sleek, minimal web game created for Ludum Dare 57 with the theme "Depths".
 - Mouse/touch controls for horizontal movement
 - Increasing difficulty over time (faster speed, narrower gaps)
 - Visual feedback for braking
-- Local leaderboard system
+- Local leaderboard system tracking depth
 - Responsive design for both desktop and mobile
 
 ## Running the Game

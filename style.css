@@ -274,29 +274,6 @@ button:hover {
     pointer-events: none;
 }
 
-/* Score effect */
-.score-popup {
-    position: absolute;
-    color: var(--success-color);
-    font-weight: bold;
-    font-size: 1.2rem;
-    animation: float-up 1.5s ease-out forwards;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
-    pointer-events: none;
-    z-index: 150;
-}
-
-@keyframes float-up {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-50px);
-    }
-}
-
 /* Game instructions */
 .game-instructions {
     position: absolute;
@@ -371,19 +348,4 @@ button:hover {
 
 #playAgainButton {
     width: 100%;
-}
-
-/* Score display */
-.score-display {
-    position: absolute;
-    top: 1.5rem;
-    width: 100%;
-    text-align: center;
-    z-index: 100;
-}
-
-#scoreValue {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--success-color);
 } 
