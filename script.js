@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastMouseX = 0;
     let difficultyLevel = 1;
     let lastObstacleTime = 0;
-    let minObstacleSpacing = 2500; // Reduced from 4000 for more frequent obstacles from the start
+    let minObstacleSpacing = 3000; // Increased from 2500 to ensure better vertical spacing between obstacles
     const movementFactor = 0.15; // Reduced from 0.2 for better visual synchronization
     
     // Classes
@@ -110,11 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     class Obstacle {
         constructor(difficulty) {
-            this.width = Math.random() * 30 + 20; // Width between 20% and 50% of shaft
-            // Gap is inversely proportional to difficulty (harder = smaller gap)
-            // More balanced gap width calculation with a higher minimum
-            this.gapWidth = Math.max(35 - (difficulty * 1.2), 22); // Increased min gap width for better playability
-            this.gapPosition = Math.random() * (100 - this.gapWidth); // % position of gap
+            // More consistent gap width - less randomness in obstacles
+            this.gapWidth = Math.max(35 - (difficulty * 1), 25); // Increased minimum gap width for better playability
+            
+            // Ensure the gap is positioned in a way that it's not too close to edges
+            const maxPosition = 100 - this.gapWidth - 5; // Leave at least 5% margin on right
+            const minPosition = 5; // Leave at least 5% margin on left
+            this.gapPosition = minPosition + (Math.random() * (maxPosition - minPosition));
+            
             this.y = 120; // Start below viewport
             this.passed = false;
             this.height = 15 + Math.random() * 5; // Varied height for more visual interest
@@ -414,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTime = Date.now();
         
         // Adjust minimum spacing based on current speed but cap it to ensure frequent obstacles
-        // Lower max speedFactor to ensure more frequent obstacles even at high speeds
-        const speedFactor = Math.min(1.2, Math.max(0.8, descentSpeed / 40));
+        // Increased min spacing factor to avoid obstacles being too close vertically
+        const speedFactor = Math.min(1.5, Math.max(1.0, descentSpeed / 40));
         const adjustedSpacing = minObstacleSpacing * speedFactor;
         
         // Check if minimum spacing has passed
@@ -432,6 +435,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (descentSpeed > 20) {
                 const speedAdjustment = Math.min(10, (descentSpeed - 20) / 4);
                 obstacle.gapWidth = Math.min(45, obstacle.gapWidth + speedAdjustment);
+            }
+            
+            // Check if there's a recent obstacle too close in Y position
+            // and ensure gaps don't overlap in a way that creates impossible passages
+            if (obstacles.length > 0) {
+                // Get the most recent obstacle
+                const lastObstacle = obstacles[obstacles.length - 1];
+                
+                // If the last obstacle is too close vertically, don't add this one
+                if (lastObstacle.y > 80) {
+                    return; // Skip this obstacle generation
+                }
+                
+                // Check for potential overlap that would create impossible passages
+                // Make sure there's at least some overlap in the gaps
+                const lastGapLeft = lastObstacle.gapPosition;
+                const lastGapRight = lastObstacle.gapPosition + lastObstacle.gapWidth;
+                const newGapLeft = obstacle.gapPosition;
+                const newGapRight = obstacle.gapPosition + obstacle.gapWidth;
+                
+                // If gaps don't overlap at all, shift the new gap position
+                const noGapOverlap = (newGapRight < lastGapLeft || newGapLeft > lastGapRight);
+                
+                if (noGapOverlap) {
+                    // Adjust gap position to ensure some passable overlap
+                    const targetCenter = lastGapLeft + (lastObstacle.gapWidth / 2); // Center of last gap
+                    const gapHalfWidth = obstacle.gapWidth / 2;
+                    
+                    // Position new gap to overlap with previous gap
+                    const newPosition = Math.max(0, Math.min(100 - obstacle.gapWidth, targetCenter - gapHalfWidth));
+                    obstacle.gapPosition = newPosition;
+                    
+                    // Update the elements' positions
+                    obstacle.leftElement.style.width = `${obstacle.gapPosition}%`;
+                    obstacle.rightElement.style.left = `${obstacle.gapPosition + obstacle.gapWidth}%`;
+                    obstacle.rightElement.style.width = `${100 - (obstacle.gapPosition + obstacle.gapWidth)}%`;
+                }
             }
             
             obstacles.push(obstacle);
@@ -638,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset game state
         difficultyLevel = 1;
         lastObstacleTime = 0;
-        minObstacleSpacing = 2500; // Reduced from 4000 for more frequent obstacles from the start
+        minObstacleSpacing = 3000; // Increased from 2500 to ensure better vertical spacing between obstacles
         
         // Reset brake power
         brakePower = maxBrakePower;
@@ -789,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Create obstacles more frequently
+    // Create obstacles more frequently but with better spacing
     function createObstacleInterval() {
         obstacleInterval = setInterval(() => {
             if (!gameActive) return;
@@ -798,12 +838,22 @@ document.addEventListener('DOMContentLoaded', () => {
             generateObstacle();
             
             // Force additional obstacles when there are too few on screen
-            if (obstacles.length < 4) { // Increased from 3 to 4 minimum obstacles
-                // Reset the last obstacle time to force generation
-                lastObstacleTime = 0;
-                generateObstacle();
+            // But we only want to add new ones if they're not too close to each other
+            if (obstacles.length < 3) {
+                // Find the lowest obstacle (highest y value)
+                let lowestY = 0;
+                obstacles.forEach(obs => {
+                    lowestY = Math.max(lowestY, obs.y);
+                });
+                
+                // Only force generate if the lowest obstacle isn't too high
+                if (lowestY < 80) {
+                    // Reset the last obstacle time to force generation
+                    lastObstacleTime = 0;
+                    generateObstacle();
+                }
             }
-        }, 200); // Check more frequently (reduced from 300ms to 200ms)
+        }, 250); // Slightly increased interval to avoid too many obstacles
     }
     
     // Setup difficulty progression
