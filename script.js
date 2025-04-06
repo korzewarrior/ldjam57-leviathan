@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let difficultyTimer;
     let gameActive = false;
     let leaderboard = [];
-    let shaftWidth; // Width of the elevator shaft
-    let shaftHeight; // Height of the elevator shaft
+    let shaftWidth = 0; // Width of the elevator shaft
+    let shaftHeight = 0; // Height of the elevator shaft
     let elevatorX = 50; // % position horizontally
     let elevatorWidth = 70; // px - updated to match CSS
     let elevatorHeight = 70; // px - updated to match CSS
@@ -77,11 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
             this.y = 120; // Start below viewport
             this.passed = false;
             this.height = 15 + Math.random() * 5; // Varied height for more visual interest
+            this.collisionChecked = false; // Flag to ensure we only check collision once when in range
         }
         
         update(speedMultiplier) {
             // Use a consistent movement factor for visual cohesion
             this.y -= speedMultiplier * movementFactor;
+            
+            // Reset collision check flag when obstacle is below elevator
+            if (this.y > 25) {
+                this.collisionChecked = false;
+            }
+            
             return this.y > -20; // Return true if obstacle still in view
         }
         
@@ -107,39 +114,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth) {
-            // Elevator vertical position - now at 15% from top
-            const elevatorTop = 15 - (elevatorHeight / 2);
-            const elevatorBottom = 15 + (elevatorHeight / 2);
+            // Elevator position
+            const elevatorCenterY = 15; // % from top
+            const elevatorTop = elevatorCenterY - (elevatorHeight / 2) / shaftHeight * 100; // Convert to percentage
+            const elevatorBottom = elevatorCenterY + (elevatorHeight / 2) / shaftHeight * 100;
             
-            // Add a small buffer for collision detection to make it more forgiving (5px)
-            const collisionBuffer = 5;
+            // Obstacle position in percentage
+            const obstacleTop = this.y - (this.height / 2) / shaftHeight * 100;
+            const obstacleBottom = this.y + (this.height / 2) / shaftHeight * 100;
             
-            // Only check collision when obstacle is near elevator's level (vertically)
-            // Reduced vertical collision area for more precision
-            const verticalThreshold = this.height / 2;
-            if (Math.abs(this.y - elevatorTop) < verticalThreshold) {
-                // Convert elevator's center position from percentage to actual position
-                const elevatorCenter = (elevatorX / 100) * shaftWidth;
-                const elevatorLeft = elevatorCenter - (elevatorWidth / 2) + collisionBuffer;
-                const elevatorRight = elevatorCenter + (elevatorWidth / 2) - collisionBuffer;
+            // More forgiving vertical collision zone - only check when obstacle is centered on elevator
+            const verticalOverlap = (this.y > elevatorTop && this.y < elevatorBottom);
+            
+            // Only check for collision once per obstacle as it passes through elevator zone
+            if (verticalOverlap && !this.collisionChecked) {
+                this.collisionChecked = true; // Mark as checked
                 
-                // Calculate obstacle edges in actual pixels
+                // Convert elevator's position to actual position
+                const elevatorCenter = (elevatorX / 100) * shaftWidth;
+                const elevatorLeft = elevatorCenter - (elevatorWidth / 2);
+                const elevatorRight = elevatorCenter + (elevatorWidth / 2);
+                
+                // Calculate gap edges in actual pixels
                 const gapLeft = (this.gapPosition / 100) * shaftWidth;
                 const gapRight = ((this.gapPosition + this.gapWidth) / 100) * shaftWidth;
                 
-                // Check if elevator is within the gap
-                if (elevatorRight < gapLeft || elevatorLeft > gapRight) {
+                // Check if elevator is NOT within gap (collision)
+                // More lenient collision detection with a 10px buffer
+                const buffer = 10;
+                if (elevatorRight - buffer < gapLeft || elevatorLeft + buffer > gapRight) {
                     return true; // Collision detected
                 }
             }
             
-            // Mark obstacle as passed once it's above the elevator
-            if (this.y < elevatorTop - verticalThreshold && !this.passed) {
+            // Mark as passed once it's clearly above elevator
+            if (this.y < elevatorTop - 5 && !this.passed) {
                 this.passed = true;
-                return false;
             }
             
-            return false;
+            return false; // No collision
         }
     }
     
@@ -321,40 +334,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Start the game
-    function startGame() {
-        playerName = playerNameInput.value.trim() || 'ANONYMOUS';
-        playerNameDisplay.textContent = playerName;
-        
-        welcomeScreen.classList.add('hidden');
-        gameScreen.classList.remove('hidden');
-        
-        // Get shaft dimensions
+    // Update shaft dimensions
+    function updateShaftDimensions() {
         const shaft = document.querySelector('.elevator-shaft');
-        shaft.innerHTML = '';
-        shaft.appendChild(elevatorElement);
-        
-        shaftHeight = shaft.offsetHeight;
-        shaftWidth = shaft.offsetWidth;
-        
-        // Reset game variables
-        currentDepth = 0;
-        descentSpeed = maxSpeed / 2; // Start at medium speed
-        gameActive = true;
-        isBraking = false;
-        obstacles = [];
-        particles = [];
-        difficultyLevel = 1;
-        lastObstacleTime = 0;
-        minObstacleSpacing = 4000;
-        
-        // Update displays
-        currentDepthDisplay.textContent = '0';
-        
-        // Clear any existing intervals
-        if (gameInterval) clearInterval(gameInterval);
-        if (obstacleInterval) clearInterval(obstacleInterval);
-        if (difficultyTimer) clearInterval(difficultyTimer);
+        if (shaft) {
+            shaftWidth = shaft.offsetWidth;
+            shaftHeight = shaft.offsetHeight;
+            console.log(`Shaft dimensions updated: ${shaftWidth}px x ${shaftHeight}px`);
+        }
+    }
+    
+    // Set up the main game loop
+    function setupGameLoop() {
+        // First update shaft dimensions to ensure accurate collision detection
+        updateShaftDimensions();
         
         // Set up the main game loop
         gameInterval = setInterval(() => {
@@ -386,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Check for collision
                 if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth)) {
                     collision = true;
+                    console.log("Collision detected!");
                 }
                 
                 return stillVisible;
@@ -397,6 +391,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
         }, 50);
+    }
+    
+    // Start the game
+    function startGame() {
+        playerName = playerNameInput.value.trim() || 'ANONYMOUS';
+        playerNameDisplay.textContent = playerName;
+        
+        welcomeScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        
+        // Get shaft dimensions
+        const shaft = document.querySelector('.elevator-shaft');
+        shaft.innerHTML = '';
+        shaft.appendChild(elevatorElement);
+        
+        // Update shaft dimensions
+        updateShaftDimensions();
+        
+        // Reset game variables
+        currentDepth = 0;
+        descentSpeed = maxSpeed / 2; // Start at medium speed
+        gameActive = true;
+        isBraking = false;
+        obstacles = [];
+        particles = [];
+        difficultyLevel = 1;
+        lastObstacleTime = 0;
+        minObstacleSpacing = 4000;
+        
+        // Update displays
+        currentDepthDisplay.textContent = '0';
+        
+        // Clear any existing intervals
+        if (gameInterval) clearInterval(gameInterval);
+        if (obstacleInterval) clearInterval(obstacleInterval);
+        if (difficultyTimer) clearInterval(difficultyTimer);
+        
+        // Set up game loop
+        setupGameLoop();
         
         // Generate new obstacles periodically
         obstacleInterval = setInterval(() => {
@@ -498,4 +531,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadLeaderboard();
     // Display initial leaderboard
     displayLeaderboard();
+    
+    // Add a resize handler to keep shaft dimensions updated
+    window.addEventListener('resize', () => {
+        if (gameActive) {
+            updateShaftDimensions();
+        }
+    });
 }); 
