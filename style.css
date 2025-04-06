@@ -9,6 +9,7 @@
     --panel-color: #121222;
     --depth-color: #00c8ff;
     --obstacle-color: #ff3c5a;
+    --brake-color: #ff6600;
 }
 
 * {
@@ -26,6 +27,12 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    transition: background-color 0.2s ease;
+}
+
+/* Braking effect for body */
+body.braking {
+    background-color: rgba(30, 15, 5, 1);
 }
 
 .game-container {
@@ -177,6 +184,14 @@ button:hover {
     overflow: hidden;
     background-color: rgba(0, 0, 0, 0.2);
     cursor: move; /* Show cursor as movable */
+    transition: background-color 0.2s ease;
+}
+
+/* Braking effect for shaft */
+.elevator-shaft.braking {
+    background-color: rgba(30, 15, 5, 0.4);
+    border-left: 2px dashed rgba(255, 102, 0, 0.2);
+    border-right: 2px dashed rgba(255, 102, 0, 0.2);
 }
 
 .elevator {
@@ -190,7 +205,13 @@ button:hover {
     box-shadow: 0 0 15px rgba(0, 200, 255, 0.7);
     z-index: 10;
     border-radius: 4px;
-    transition: left 0.1s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+/* Braking effect for elevator */
+.elevator.braking {
+    background-color: var(--brake-color);
+    box-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
 }
 
 /* Obstacle styles */
@@ -241,9 +262,11 @@ button:hover {
     top: 6rem;
     width: 100%;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 1rem;
     opacity: 0.7;
     pointer-events: none;
+    z-index: 200;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 /* Results Screen Styles */

@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerNameDisplay = document.getElementById('playerNameDisplay');
     const currentDepthDisplay = document.getElementById('currentDepth');
     const finalDepthDisplay = document.getElementById('finalDepth');
-    const descentButton = document.getElementById('descentButton');
     const playAgainButton = document.getElementById('playAgainButton');
     const highScoreMessage = document.getElementById('highScoreMessage');
     const leaderboardList = document.getElementById('leaderboardList');
@@ -18,11 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerName = '';
     let currentDepth = 0;
     let descentSpeed = 0;
-    let minSpeed = 2; // Minimum speed when not accelerating
+    let minSpeed = 2; // Minimum speed when braking hard
     let maxSpeed = 15;
     let acceleration = 0.1;
-    let deceleration = 0.05;
-    let isAccelerating = false;
+    let deceleration = 0.2; // Increased for better braking
+    let isBraking = false;
     let gameInterval;
     let obstacleInterval;
     let difficultyTimer;
@@ -36,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let particles = [];
     let lastMouseX = 0;
     let difficultyLevel = 1;
+    let lastObstacleTime = 0;
+    let minObstacleSpacing = 3000; // Minimum time between obstacles in ms
     
     // Classes
     class Particle {
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Only check collision when obstacle is at elevator's level (vertically)
             if (this.y > 45 && this.y < 55) {
                 // Convert elevator's center position from percentage to actual position
-                const elevatorLeft = (elevatorX / 100) * shaftWidth;
+                const elevatorLeft = (elevatorX / 100) * shaftWidth - (elevatorWidth / 2);
                 const elevatorRight = elevatorLeft + elevatorWidth;
                 
                 // Calculate obstacle edges in actual pixels
@@ -269,12 +270,40 @@ document.addEventListener('DOMContentLoaded', () => {
         // Constraint elevator position to stay within shaft
         elevatorX = Math.max(0, Math.min(100, relativePosition));
         
-        // Convert from percentage to pixel position, accounting for elevator width
-        const elevatorLeftPos = (elevatorX / 100) * shaftRect.width - (elevatorWidth / 2);
-        
         // Update elevator position
         elevatorElement.style.left = `${elevatorX}%`;
         elevatorElement.style.transform = 'translate(-50%, -50%)';
+    }
+    
+    // Generate an obstacle if enough time has passed since the last one
+    function generateObstacle() {
+        const currentTime = Date.now();
+        
+        // Check if minimum spacing has passed
+        if (currentTime - lastObstacleTime >= minObstacleSpacing) {
+            obstacles.push(new Obstacle(difficultyLevel));
+            lastObstacleTime = currentTime;
+            
+            // Adjust spacing based on difficulty
+            minObstacleSpacing = Math.max(1500, 3000 - (difficultyLevel * 150));
+        }
+    }
+    
+    // Apply visual effects for braking
+    function updateBrakingVisuals() {
+        const shaft = document.querySelector('.elevator-shaft');
+        
+        if (isBraking) {
+            // Add visual cue for braking
+            shaft.classList.add('braking');
+            document.body.classList.add('braking');
+            elevatorElement.classList.add('braking');
+        } else {
+            // Remove visual cue
+            shaft.classList.remove('braking');
+            document.body.classList.remove('braking');
+            elevatorElement.classList.remove('braking');
+        }
     }
     
     // Start the game
@@ -284,9 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         welcomeScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
-        
-        // Change the descent button text
-        descentButton.textContent = 'HOLD TO ACCELERATE';
         
         // Get shaft dimensions
         const shaft = document.querySelector('.elevator-shaft');
@@ -298,12 +324,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset game variables
         currentDepth = 0;
-        descentSpeed = minSpeed;
+        descentSpeed = maxSpeed / 2; // Start at medium speed
         gameActive = true;
-        isAccelerating = false;
+        isBraking = false;
         obstacles = [];
         particles = [];
         difficultyLevel = 1;
+        lastObstacleTime = 0;
+        minObstacleSpacing = 3000;
         
         // Update display
         currentDepthDisplay.textContent = '0';
@@ -317,12 +345,15 @@ document.addEventListener('DOMContentLoaded', () => {
         gameInterval = setInterval(() => {
             if (!gameActive) return;
             
-            // Update speed based on acceleration state
-            if (isAccelerating) {
-                descentSpeed = Math.min(descentSpeed + acceleration, maxSpeed);
-            } else {
+            // Update speed based on braking state
+            if (isBraking) {
                 descentSpeed = Math.max(descentSpeed - deceleration, minSpeed);
+            } else {
+                descentSpeed = Math.min(descentSpeed + acceleration, maxSpeed);
             }
+            
+            // Update visuals for braking
+            updateBrakingVisuals();
             
             // Update depth
             currentDepth += descentSpeed / 10;
@@ -360,9 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Generate new obstacles periodically
         obstacleInterval = setInterval(() => {
             if (gameActive && obstacles.length < 5) {
-                obstacles.push(new Obstacle(difficultyLevel));
+                generateObstacle();
             }
-        }, 2000);
+        }, 500); // Check more frequently but actual spawning is controlled by minObstacleSpacing
         
         // Increase difficulty level over time
         difficultyTimer = setInterval(() => {
@@ -408,20 +439,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners
     startButton.addEventListener('click', startGame);
     
-    // Hold button to accelerate
-    descentButton.addEventListener('mousedown', () => {
-        isAccelerating = true;
+    // Hold anywhere to brake
+    document.addEventListener('mousedown', () => {
+        if (gameActive) {
+            isBraking = true;
+        }
     });
-    descentButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        isAccelerating = true;
+    document.addEventListener('touchstart', (e) => {
+        if (gameActive) {
+            e.preventDefault();
+            isBraking = true;
+        }
     });
     
     document.addEventListener('mouseup', () => {
-        isAccelerating = false;
+        isBraking = false;
     });
     document.addEventListener('touchend', () => {
-        isAccelerating = false;
+        isBraking = false;
     });
     
     // Mouse movement to control elevator
@@ -446,9 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Prevent context menu on long press
     document.addEventListener('contextmenu', (e) => {
-        if (e.target === descentButton) {
-            e.preventDefault();
-        }
+        e.preventDefault();
     });
     
     // Load leaderboard from localStorage

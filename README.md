@@ -5,18 +5,19 @@ A sleek, minimal web game created for Ludum Dare 57 with the theme "Depths".
 ## How to Play
 
 1. Enter your name (or play anonymously)
-2. **HOLD** the button to accelerate deeper
+2. Your elevator automatically descends at increasing speed
 3. **MOVE** your mouse/finger to navigate horizontally
-4. Dodge obstacles by moving through the gaps
-5. Go as deep as you can without crashing!
-6. The deeper you go, the higher your score
+4. **HOLD** anywhere on screen to apply brakes
+5. Dodge obstacles by moving through the gaps
+6. Go as deep as you can without crashing!
 
 ## Features
 
 - Minimalist sleek design
-- Hold-to-accelerate mechanics with dodge obstacles
+- Automatic descent with hold-to-brake mechanics
 - Mouse/touch controls for horizontal movement
 - Increasing difficulty over time (faster speed, narrower gaps)
+- Visual feedback for braking
 - Local leaderboard system
 - Responsive design for both desktop and mobile
 
@@ -26,8 +27,8 @@ Simply open `index.html` in your web browser to play!
 
 ## Controls
 
-- **Desktop**: Hold button to accelerate, move mouse to navigate
-- **Mobile**: Hold button to accelerate, touch and drag to navigate
+- **Desktop**: Move mouse to navigate, click and hold anywhere to brake
+- **Mobile**: Touch and drag to navigate, touch and hold to brake
 
 ## Technical Details
 
