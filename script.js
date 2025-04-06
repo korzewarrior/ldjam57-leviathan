@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerName = '';
     let currentDepth = 0;
     let descentSpeed = 0;
-    let minSpeed = 2; // Reduced from 3 for better control when braking
-    let maxSpeed = 12; // Reduced from 20 for more manageable gameplay
-    let acceleration = 0.08; // Reduced from 0.15 for slower acceleration
+    let minSpeed = 2; // Minimum speed when braking hard
+    let maxSpeed = 60; // Dramatically increased to allow for absurd speeds
+    let baseAcceleration = 0.03; // Base acceleration rate that will increase with depth
     let deceleration = 0.3;
     let isBraking = false;
     let gameInterval;
@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Brake power variables
     let maxBrakePower = 100;
     let brakePower = maxBrakePower;
-    let brakePowerConsumptionRate = 0.7; // Reduced consumption rate for more braking time
-    let brakePowerRegenRate = 0.4; // Increased regeneration rate for better gameplay balance
+    let brakePowerConsumptionRate = 0.9; // Increased consumption for more strategic braking
+    let brakePowerRegenRate = 0.5; // Increased regeneration to balance higher consumption
     let canBrake = true; // Whether the player can currently brake
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
@@ -413,8 +413,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateObstacle() {
         const currentTime = Date.now();
         
+        // Adjust minimum spacing based on current speed to avoid impossible situations
+        const speedFactor = Math.max(1, descentSpeed / 15);
+        const adjustedSpacing = minObstacleSpacing * speedFactor;
+        
         // Check if minimum spacing has passed
-        if (currentTime - lastObstacleTime >= minObstacleSpacing) {
+        if (currentTime - lastObstacleTime >= adjustedSpacing) {
             // Create a new obstacle with adjusted gap width for more balanced difficulty
             const obstacle = new Obstacle(difficultyLevel);
             
@@ -423,11 +427,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 obstacle.gapWidth = Math.max(obstacle.gapWidth, 25); // Ensure a minimum gap width for early levels
             }
             
+            // Adjust gap width slightly based on current speed for fairness
+            if (descentSpeed > 20) {
+                const speedAdjustment = Math.min(10, (descentSpeed - 20) / 4);
+                obstacle.gapWidth = Math.min(45, obstacle.gapWidth + speedAdjustment);
+            }
+            
             obstacles.push(obstacle);
             lastObstacleTime = currentTime;
-            
-            // Adjust spacing based on difficulty (but keep it playable)
-            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 175));
         }
     }
     
@@ -473,6 +480,20 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 brakePowerBar.style.backgroundColor = 'var(--success-color)';
             }
+            
+            // Add speed warning indicator
+            if (descentSpeed > 20) {
+                // Flash brake bar at high speeds to indicate danger
+                const flashRate = Math.min(1, (descentSpeed - 20) / 20);
+                brakePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
+                
+                // Add pulsing effect to the brake bar at high speeds
+                const pulseSize = Math.min(5, (descentSpeed - 20) / 8);
+                brakePowerBar.style.boxShadow = `0 0 ${pulseSize}px 2px rgba(255, 60, 90, 0.7)`;
+            } else {
+                brakePowerBar.style.opacity = 1;
+                brakePowerBar.style.boxShadow = '';
+            }
         }
     }
     
@@ -499,6 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentDepth += descentSpeed / 100;
                 currentDepthDisplay.textContent = Math.floor(currentDepth);
                 
+                // Calculate current acceleration based on depth - gets faster as you go deeper
+                const depthFactor = Math.min(1 + (currentDepth / 300), 4);
+                const currentAcceleration = baseAcceleration * depthFactor;
+                
                 // Handle braking
                 if (isBraking && canBrake) {
                     // Consume brake power when braking
@@ -510,8 +535,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         canBrake = false;
                     }
                     
-                    // Apply stronger braking effect to speed
-                    descentSpeed = Math.max(minSpeed, descentSpeed * 0.92); // Stronger deceleration
+                    // More powerful braking at higher speeds
+                    const brakeEffectiveness = Math.min(0.15, 0.08 + (descentSpeed / 100));
+                    descentSpeed = Math.max(minSpeed, descentSpeed * (1 - brakeEffectiveness));
                 } else {
                     // Regenerate brake power when not braking
                     if (brakePower < maxBrakePower) {
@@ -521,13 +547,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         
                         // Re-enable braking if power is sufficient
-                        if (!canBrake && brakePower >= maxBrakePower * 0.2) { // Reduced from 0.25 to re-enable braking sooner
+                        if (!canBrake && brakePower >= maxBrakePower * 0.2) {
                             canBrake = true;
                         }
                     }
                     
-                    // More gradual acceleration when not braking
-                    descentSpeed = Math.min(maxSpeed, descentSpeed * 1.008); // Reduced from 1.01 for slower acceleration
+                    // Continuously accelerate - increased effect at higher depths
+                    descentSpeed = Math.min(maxSpeed, descentSpeed + currentAcceleration);
+                    
+                    // Apply a small automatic brake at extreme speeds to prevent impossible gameplay
+                    if (descentSpeed > 30) {
+                        const autobrake = (descentSpeed - 30) * 0.005;
+                        descentSpeed = Math.max(30, descentSpeed - autobrake);
+                    }
                 }
                 
                 // Update brake power display
@@ -586,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset game variables
         currentDepth = 0;
-        descentSpeed = maxSpeed / 3; // Start at lower speed (was maxSpeed/2)
+        descentSpeed = 5; // Start at a lower speed but it will quickly accelerate
         gameActive = true;
         isBraking = false;
         
@@ -772,16 +804,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!gameActive) return;
             
             // More gradual difficulty increase
-            difficultyLevel += 0.3; // Reduced from 0.5
+            difficultyLevel += 0.3;
             
             // As difficulty increases, reduce minimum obstacle spacing more gradually
-            minObstacleSpacing = Math.max(2000, 4000 - (difficultyLevel * 175)); // More gradual spacing reduction
+            minObstacleSpacing = Math.max(1500, 4000 - (difficultyLevel * 200));
             
-            // Increase max speed more slowly with difficulty
-            maxSpeed = Math.min(18, 8 + (difficultyLevel * 0.4)); // Slower speed increase, lower overall cap
+            // Flash the depth display to indicate difficulty increase
+            currentDepthDisplay.style.color = 'var(--danger-color)';
+            setTimeout(() => {
+                currentDepthDisplay.style.color = 'var(--depth-color)';
+            }, 200);
             
-            console.log(`Difficulty increased to ${difficultyLevel}, spacing: ${minObstacleSpacing}, max speed: ${maxSpeed}`);
+            console.log(`Difficulty increased to ${difficultyLevel}, spacing: ${minObstacleSpacing}`);
             
-        }, 20000); // Increased from 15000 - difficulty increases every 20 seconds instead of 15
+        }, 18000); // Every 18 seconds
     }
 }); 
