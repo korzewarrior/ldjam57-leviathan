@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Brake power variables
     let maxBrakePower = 100;
     let brakePower = maxBrakePower;
-    let brakePowerConsumptionRate = 0.9; // Increased consumption for more strategic braking
-    let brakePowerRegenRate = 0.5; // Increased regeneration to balance higher consumption
+    let brakePowerConsumptionRate = 0.7; // Reduced from 0.9 for less aggressive consumption
+    let brakePowerRegenRate = 0.3; // Reduced from 0.5 for more gradual regeneration
     let canBrake = true; // Whether the player can currently brake
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastMouseX = 0;
     let difficultyLevel = 1;
     let lastObstacleTime = 0;
-    let minObstacleSpacing = 4000; // Increased minimum time between obstacles in ms
+    let minObstacleSpacing = 2500; // Reduced from 4000 for more frequent obstacles from the start
     const movementFactor = 0.15; // Reduced from 0.2 for better visual synchronization
     
     // Classes
@@ -413,8 +413,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateObstacle() {
         const currentTime = Date.now();
         
-        // Adjust minimum spacing based on current speed to avoid impossible situations
-        const speedFactor = Math.max(1, descentSpeed / 15);
+        // Adjust minimum spacing based on current speed but cap it to ensure frequent obstacles
+        // Lower max speedFactor to ensure more frequent obstacles even at high speeds
+        const speedFactor = Math.min(1.2, Math.max(0.8, descentSpeed / 40));
         const adjustedSpacing = minObstacleSpacing * speedFactor;
         
         // Check if minimum spacing has passed
@@ -535,13 +536,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         canBrake = false;
                     }
                     
-                    // More powerful braking at higher speeds
-                    const brakeEffectiveness = Math.min(0.15, 0.08 + (descentSpeed / 100));
+                    // Less powerful braking - reduced effectiveness values
+                    const brakeEffectiveness = Math.min(0.06, 0.03 + (descentSpeed / 200));
                     descentSpeed = Math.max(minSpeed, descentSpeed * (1 - brakeEffectiveness));
                 } else {
-                    // Regenerate brake power when not braking
+                    // Regenerate brake power when not braking - make it dependent on speed
                     if (brakePower < maxBrakePower) {
-                        brakePower += brakePowerRegenRate;
+                        // Slower regeneration at higher speeds
+                        const speedFactor = Math.max(0.3, 1 - (descentSpeed / 50));
+                        const adjustedRegenRate = brakePowerRegenRate * speedFactor;
+                        
+                        brakePower += adjustedRegenRate;
                         if (brakePower >= maxBrakePower) {
                             brakePower = maxBrakePower;
                         }
@@ -633,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset game state
         difficultyLevel = 1;
         lastObstacleTime = 0;
-        minObstacleSpacing = 4000;
+        minObstacleSpacing = 2500; // Reduced from 4000 for more frequent obstacles from the start
         
         // Reset brake power
         brakePower = maxBrakePower;
@@ -784,18 +789,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Create obstacles periodically
+    // Create obstacles more frequently
     function createObstacleInterval() {
         obstacleInterval = setInterval(() => {
             if (!gameActive) return;
             
-            const currentTime = Date.now();
-            // Only create a new obstacle if enough time has passed since the last one
-            if (currentTime - lastObstacleTime >= minObstacleSpacing) {
+            // Try to generate an obstacle
+            generateObstacle();
+            
+            // Force additional obstacles when there are too few on screen
+            if (obstacles.length < 4) { // Increased from 3 to 4 minimum obstacles
+                // Reset the last obstacle time to force generation
+                lastObstacleTime = 0;
                 generateObstacle();
-                lastObstacleTime = currentTime;
             }
-        }, 500); // Check opportunity to create obstacles every 500ms
+        }, 200); // Check more frequently (reduced from 300ms to 200ms)
     }
     
     // Setup difficulty progression
@@ -807,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             difficultyLevel += 0.3;
             
             // As difficulty increases, reduce minimum obstacle spacing more gradually
-            minObstacleSpacing = Math.max(1500, 4000 - (difficultyLevel * 200));
+            minObstacleSpacing = Math.max(1200, 3000 - (difficultyLevel * 150)); // Reduced base spacing and minimum
             
             // Flash the depth display to indicate difficulty increase
             currentDepthDisplay.style.color = 'var(--danger-color)';
