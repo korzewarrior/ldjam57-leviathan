@@ -359,4 +359,23 @@ button:hover {
 
 #playAgainButton {
     width: 100%;
+}
+
+/* Debug styles */
+.debug-box {
+    position: absolute;
+    border: 1px dashed yellow;
+    background-color: rgba(255, 255, 0, 0.1);
+    z-index: 50;
+    pointer-events: none;
+}
+
+.debug-elevator {
+    border-color: cyan;
+    background-color: rgba(0, 255, 255, 0.1);
+}
+
+.debug-gap {
+    border-color: lime;
+    background-color: rgba(0, 255, 0, 0.1);
 } 

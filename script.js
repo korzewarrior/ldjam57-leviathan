@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let obstacleInterval;
     let difficultyTimer;
     let gameActive = false;
+    let debugMode = false; // Set to true to see collision boundaries
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
     let shaftHeight = 0; // Height of the elevator shaft
@@ -77,18 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
             this.y = 120; // Start below viewport
             this.passed = false;
             this.height = 15 + Math.random() * 5; // Varied height for more visual interest
-            this.collisionChecked = false; // Flag to ensure we only check collision once when in range
         }
         
         update(speedMultiplier) {
             // Use a consistent movement factor for visual cohesion
             this.y -= speedMultiplier * movementFactor;
-            
-            // Reset collision check flag when obstacle is below elevator
-            if (this.y > 25) {
-                this.collisionChecked = false;
-            }
-            
             return this.y > -20; // Return true if obstacle still in view
         }
         
@@ -100,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             leftPart.style.top = `${this.y}%`;
             leftPart.style.width = `${this.gapPosition}%`;
             leftPart.style.height = `${this.height}px`;
+            leftPart.style.transform = 'translateY(-50%)'; // Center vertically
             
             // Right part of obstacle
             const rightPart = document.createElement('div');
@@ -108,51 +103,71 @@ document.addEventListener('DOMContentLoaded', () => {
             rightPart.style.top = `${this.y}%`;
             rightPart.style.width = `${100 - (this.gapPosition + this.gapWidth)}%`;
             rightPart.style.height = `${this.height}px`;
+            rightPart.style.transform = 'translateY(-50%)'; // Center vertically
             
             container.appendChild(leftPart);
             container.appendChild(rightPart);
         }
         
+        // Simple, direct rectangle collision check
         checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth) {
-            // Elevator position
-            const elevatorCenterY = 15; // % from top
-            const elevatorTop = elevatorCenterY - (elevatorHeight / 2) / shaftHeight * 100; // Convert to percentage
-            const elevatorBottom = elevatorCenterY + (elevatorHeight / 2) / shaftHeight * 100;
+            // Get elevator position in pixels
+            const elevator = {
+                centerX: (elevatorX / 100) * shaftWidth,
+                centerY: (15 / 100) * shaftHeight, // 15% from top
+                width: elevatorWidth,
+                height: elevatorHeight
+            };
             
-            // Obstacle position in percentage
-            const obstacleTop = this.y - (this.height / 2) / shaftHeight * 100;
-            const obstacleBottom = this.y + (this.height / 2) / shaftHeight * 100;
+            // Calculate elevator boundaries
+            const elevatorLeft = elevator.centerX - (elevator.width / 2);
+            const elevatorRight = elevator.centerX + (elevator.width / 2);
+            const elevatorTop = elevator.centerY - (elevator.height / 2);
+            const elevatorBottom = elevator.centerY + (elevator.height / 2);
             
-            // More forgiving vertical collision zone - only check when obstacle is centered on elevator
-            const verticalOverlap = (this.y > elevatorTop && this.y < elevatorBottom);
+            // Calculate obstacle position in pixels
+            const obstacleY = (this.y / 100) * shaftHeight;
+            const obstacleHeight = this.height;
             
-            // Only check for collision once per obstacle as it passes through elevator zone
-            if (verticalOverlap && !this.collisionChecked) {
-                this.collisionChecked = true; // Mark as checked
-                
-                // Convert elevator's position to actual position
-                const elevatorCenter = (elevatorX / 100) * shaftWidth;
-                const elevatorLeft = elevatorCenter - (elevatorWidth / 2);
-                const elevatorRight = elevatorCenter + (elevatorWidth / 2);
-                
-                // Calculate gap edges in actual pixels
-                const gapLeft = (this.gapPosition / 100) * shaftWidth;
-                const gapRight = ((this.gapPosition + this.gapWidth) / 100) * shaftWidth;
-                
-                // Check if elevator is NOT within gap (collision)
-                // More lenient collision detection with a 10px buffer
-                const buffer = 10;
-                if (elevatorRight - buffer < gapLeft || elevatorLeft + buffer > gapRight) {
-                    return true; // Collision detected
+            // Calculate obstacle top and bottom
+            const obstacleTop = obstacleY - (obstacleHeight / 2);
+            const obstacleBottom = obstacleY + (obstacleHeight / 2);
+            
+            // Check if there is a vertical overlap
+            const verticalOverlap = !(
+                elevatorBottom < obstacleTop || 
+                elevatorTop > obstacleBottom
+            );
+            
+            // If no vertical overlap, no collision is possible
+            if (!verticalOverlap) {
+                // Mark as passed once it's clearly above the elevator
+                if (obstacleBottom < elevatorTop && !this.passed) {
+                    this.passed = true;
                 }
+                return false;
             }
             
-            // Mark as passed once it's clearly above elevator
-            if (this.y < elevatorTop - 5 && !this.passed) {
-                this.passed = true;
+            // Calculate gap boundaries in pixels
+            const gapLeft = (this.gapPosition / 100) * shaftWidth;
+            const gapRight = ((this.gapPosition + this.gapWidth) / 100) * shaftWidth;
+            
+            // Check if elevator is inside the gap (no collision)
+            const insideGap = elevatorLeft >= gapLeft && elevatorRight <= gapRight;
+            
+            // If inside gap, no collision
+            if (insideGap) {
+                return false;
             }
             
-            return false; // No collision
+            // Otherwise there is a collision
+            console.log("Collision detected:", {
+                elevator: { left: elevatorLeft, right: elevatorRight, top: elevatorTop, bottom: elevatorBottom },
+                obstacle: { y: obstacleY, top: obstacleTop, bottom: obstacleBottom },
+                gap: { left: gapLeft, right: gapRight }
+            });
+            
+            return true;
         }
     }
     
