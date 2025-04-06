@@ -45,8 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let debugMode = false;
     let maxBrakePower = 100;
     let brakePower = maxBrakePower;
-    let brakePowerConsumptionRate = 1.0;
-    let brakePowerRegenRate = 0.3;
+    let brakePowerConsumptionRate = 1.4;
+    let brakePowerRegenRate = 0.2;
+    let brakePowerRegenSpeedThreshold = 8;
     let canBrake = true;
     let leaderboard = [];
     let shaftWidth = 0;
@@ -456,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const powerPercentage = (brakePower / maxBrakePower) * 100;
             brakePowerBar.style.width = `${powerPercentage}%`;
             
+            // Show different colors based on power level
             if (powerPercentage < 25) {
                 brakePowerBar.style.backgroundColor = 'var(--danger-color)';
             } else if (powerPercentage < 50) {
@@ -464,6 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 brakePowerBar.style.backgroundColor = 'var(--success-color)';
             }
             
+            // Visual effects for high speed
             if (descentSpeed > 20) {
                 const flashRate = Math.min(1, (descentSpeed - 20) / 20);
                 brakePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
@@ -473,6 +476,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 brakePowerBar.style.opacity = 1;
                 brakePowerBar.style.boxShadow = '';
+            }
+            
+            // Visual indicator for the regen dead zone
+            if (descentSpeed < brakePowerRegenSpeedThreshold && brakePower < maxBrakePower) {
+                // Add a dimmed appearance to indicate no regeneration
+                brakePowerBar.style.opacity = 0.5;
+                brakePowerBar.style.background = `repeating-linear-gradient(
+                    45deg,
+                    ${brakePowerBar.style.backgroundColor},
+                    ${brakePowerBar.style.backgroundColor} 10px,
+                    rgba(0, 0, 0, 0.2) 10px,
+                    rgba(0, 0, 0, 0.2) 20px
+                )`;
+            } else if (descentSpeed <= 20) {
+                // Reset pattern if not in high speed mode (which has its own effects)
+                brakePowerBar.style.background = '';
             }
         }
     }
@@ -509,12 +528,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     descentSpeed = Math.max(minSpeed, descentSpeed * (1 - brakeEffectiveness));
                 } else {
                     if (brakePower < maxBrakePower) {
-                        const speedFactor = Math.max(0.3, 1 - (descentSpeed / 50));
-                        const adjustedRegenRate = brakePowerRegenRate * speedFactor;
-                        
-                        brakePower += adjustedRegenRate;
-                        if (brakePower >= maxBrakePower) {
-                            brakePower = maxBrakePower;
+                        if (descentSpeed >= brakePowerRegenSpeedThreshold) {
+                            const speedFactor = Math.max(0.3, 1 - (descentSpeed / 50));
+                            const adjustedRegenRate = brakePowerRegenRate * speedFactor;
+                            
+                            brakePower += adjustedRegenRate;
+                            if (brakePower >= maxBrakePower) {
+                                brakePower = maxBrakePower;
+                            }
                         }
                         
                         if (!canBrake && brakePower >= maxBrakePower * 0.2) {
