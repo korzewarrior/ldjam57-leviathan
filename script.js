@@ -12,12 +12,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const highScoreMessage = document.getElementById('highScoreMessage');
     const leaderboardList = document.getElementById('leaderboardList');
     const elevatorElement = document.getElementById('elevator');
+    const elevatorShaft = document.querySelector('.elevator-shaft');
+    const gameContainer = document.querySelector('.game-container');
+    const elevator = document.querySelector('.elevator');
+    const brakePowerDisplay = document.getElementById('brake-power');
+    const brakePowerFill = document.querySelector('.brake-power-fill');
     
     // Prevent any dragging behavior that might interfere with gameplay
     document.addEventListener('dragstart', e => e.preventDefault());
     document.addEventListener('drag', e => e.preventDefault());
     document.addEventListener('drop', e => e.preventDefault());
     document.addEventListener('dragover', e => e.preventDefault());
+    
+    // Mouse/touch state tracking
+    let mouseIsDown = false;
+    let mouseIsInGameArea = true;
+    let lastKnownMouseX = window.innerWidth / 2; // Default to center of screen
     
     // Game variables
     let playerName = '';
@@ -400,23 +410,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Update elevator horizontal position based on mouse
-    function updateElevatorPosition(mouseX) {
-        if (!gameActive) return;
+    // Set position of the elevator
+    function setPosition(clientX) {
+        // If mouse is not in game area, use last known position
+        const xPosition = mouseIsInGameArea ? clientX : lastKnownMouseX;
         
-        const shaft = document.querySelector('.elevator-shaft');
-        const shaftRect = shaft.getBoundingClientRect();
+        const rect = elevatorShaft.getBoundingClientRect();
+        const shaftLeft = rect.left;
+        const shaftWidth = rect.width;
         
-        // Calculate elevator width and position relative to shaft width
-        const relativePosition = ((mouseX - shaftRect.left) / shaftRect.width) * 100;
+        const elevatorWidth = elevator.offsetWidth;
+        const halfElevatorWidth = elevatorWidth / 2;
         
-        // Constraint elevator position to stay within shaft
-        elevatorX = Math.max(0, Math.min(100, relativePosition));
+        // Calculate the position relative to the elevator shaft
+        const relativeX = xPosition - shaftLeft;
         
-        // Update elevator position
-        elevatorElement.style.left = `${elevatorX}%`;
-        elevatorElement.style.transform = 'translate(-50%, -50%)';
+        // Constrain the position within the shaft boundaries
+        const constrainedX = Math.max(halfElevatorWidth, Math.min(relativeX, shaftWidth - halfElevatorWidth));
+        
+        // Set the position
+        elevator.style.left = `${constrainedX}px`;
     }
+    
+    // Handle mouse movement
+    elevatorShaft.addEventListener('mousemove', e => {
+        // Update last known mouse position
+        lastKnownMouseX = e.clientX;
+        setPosition(e.clientX);
+    });
+    
+    // Handle touch movement
+    elevatorShaft.addEventListener('touchmove', e => {
+        e.preventDefault(); // Prevent scrolling
+        if (e.touches.length > 0) {
+            // Update last known position
+            lastKnownMouseX = e.touches[0].clientX;
+            setPosition(e.touches[0].clientX);
+        }
+    });
     
     // Generate an obstacle if enough time has passed since the last one
     function generateObstacle() {
@@ -571,8 +602,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const depthFactor = Math.min(1 + (currentDepth / 300), 4);
                 const currentAcceleration = baseAcceleration * depthFactor;
                 
-                // Handle braking
-                if (isBraking && canBrake) {
+                // Handle braking - updated to use global mouse state
+                // This ensures braking works even if mouse has left the game area
+                if ((mouseIsDown || isBraking) && canBrake) {
                     // Consume brake power when braking
                     brakePower -= brakePowerConsumptionRate;
                     
@@ -738,39 +770,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners
     startButton.addEventListener('click', startGame);
     
-    // Hold anywhere to brake
-    document.addEventListener('mousedown', () => {
-        if (gameActive) {
-            isBraking = true;
-        }
-    });
-    document.addEventListener('touchstart', (e) => {
-        if (gameActive) {
-            e.preventDefault();
+    // Global mouse state tracking
+    window.addEventListener('mousedown', () => {
+        mouseIsDown = true;
+        if (gameActive && canBrake) {
             isBraking = true;
         }
     });
     
-    document.addEventListener('mouseup', () => {
-        isBraking = false;
-    });
-    document.addEventListener('touchend', () => {
+    window.addEventListener('mouseup', () => {
+        mouseIsDown = false;
         isBraking = false;
     });
     
-    // Mouse movement to control elevator
-    document.addEventListener('mousemove', (e) => {
-        lastMouseX = e.clientX;
-        updateElevatorPosition(lastMouseX);
+    // Game area mouse tracking
+    document.querySelector('.elevator-shaft').addEventListener('mouseenter', () => {
+        mouseIsInGameArea = true;
     });
     
-    // Touch movement for mobile
-    document.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 0) {
-            lastMouseX = e.touches[0].clientX;
-            updateElevatorPosition(lastMouseX);
+    document.querySelector('.elevator-shaft').addEventListener('mouseleave', () => {
+        mouseIsInGameArea = false;
+    });
+    
+    // Global mouse movement tracking - helps when cursor is outside game area
+    window.addEventListener('mousemove', (e) => {
+        if (gameActive) {
+            lastKnownMouseX = e.clientX;
+            if (!mouseIsInGameArea && mouseIsDown) {
+                setPosition(e.clientX);
+            }
         }
     });
+    
+    // Handle touch events for mobile
+    window.addEventListener('touchstart', (e) => {
+        if (gameActive && canBrake) {
+            mouseIsDown = true;
+            isBraking = true;
+            if (e.touches.length > 0) {
+                lastKnownMouseX = e.touches[0].clientX;
+            }
+            e.preventDefault(); // Prevent scrolling
+        }
+    }, { passive: false });
+    
+    window.addEventListener('touchend', () => {
+        mouseIsDown = false;
+        isBraking = false;
+    });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (gameActive && e.touches.length > 0) {
+            lastKnownMouseX = e.touches[0].clientX;
+            setPosition(e.touches[0].clientX);
+            e.preventDefault(); // Prevent scrolling
+        }
+    }, { passive: false });
     
     // Directly restart the game when clicking "play again"
     playAgainButton.addEventListener('click', () => {
