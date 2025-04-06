@@ -55,23 +55,56 @@ document.addEventListener('DOMContentLoaded', () => {
             this.size = Math.random() * 4 + 2;
             this.speed = Math.random() * 0.8 + 0.5; // Significantly reduced speed for better matching with obstacles
             this.opacity = Math.random() * 0.5 + 0.3;
+            
+            // Create DOM element once
+            this.element = document.createElement('div');
+            this.element.className = 'particle';
+            this.element.style.width = `${this.size}px`;
+            this.element.style.height = `${this.size}px`;
+            this.element.style.opacity = this.opacity;
+            
+            // Track if element is in DOM
+            this.isInDOM = false;
         }
         
         update(speedMultiplier) {
             // Use the same movement factor as obstacles for visual consistency
             this.y -= this.speed * speedMultiplier * movementFactor;
-            return this.y > -20; // Return true if particle still in view
+            
+            // Update position in DOM if element exists
+            if (this.isInDOM) {
+                this.element.style.top = `${this.y}%`;
+                this.element.style.left = `${this.x}%`;
+            }
+            
+            const stillVisible = this.y > -20; // Return true if particle still in view
+            
+            // If no longer visible and in DOM, prepare for removal
+            if (!stillVisible && this.isInDOM) {
+                this.shouldRemove = true;
+            }
+            
+            return stillVisible;
         }
         
         draw(container) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = `${this.x}%`;
-            particle.style.top = `${this.y}%`;
-            particle.style.width = `${this.size}px`;
-            particle.style.height = `${this.size}px`;
-            particle.style.opacity = this.opacity;
-            container.appendChild(particle);
+            // Only append to DOM if not already there
+            if (!this.isInDOM) {
+                this.element.style.top = `${this.y}%`;
+                this.element.style.left = `${this.x}%`;
+                
+                container.appendChild(this.element);
+                this.isInDOM = true;
+                this.shouldRemove = false;
+            }
+        }
+        
+        // Remove element from DOM
+        remove() {
+            if (this.isInDOM && this.element.parentNode) {
+                this.element.parentNode.removeChild(this.element);
+                this.isInDOM = false;
+            }
         }
     }
     
@@ -85,35 +118,74 @@ document.addEventListener('DOMContentLoaded', () => {
             this.y = 120; // Start below viewport
             this.passed = false;
             this.height = 15 + Math.random() * 5; // Varied height for more visual interest
+            
+            // Create DOM elements once and reuse them
+            this.leftElement = document.createElement('div');
+            this.leftElement.className = 'obstacle';
+            
+            this.rightElement = document.createElement('div');
+            this.rightElement.className = 'obstacle';
+            
+            // Set styles that won't change
+            this.leftElement.style.left = '0';
+            this.leftElement.style.width = `${this.gapPosition}%`;
+            this.leftElement.style.height = `${this.height}px`;
+            this.leftElement.style.transform = 'translateY(-50%)';
+            
+            this.rightElement.style.left = `${this.gapPosition + this.gapWidth}%`;
+            this.rightElement.style.width = `${100 - (this.gapPosition + this.gapWidth)}%`;
+            this.rightElement.style.height = `${this.height}px`;
+            this.rightElement.style.transform = 'translateY(-50%)';
+            
+            // Track if elements are in DOM
+            this.isInDOM = false;
         }
         
         update(speedMultiplier) {
             // Use a consistent movement factor for visual cohesion
             this.y -= speedMultiplier * movementFactor;
-            return this.y > -20; // Return true if obstacle still in view
+            
+            // Update positions in DOM if the elements exist
+            if (this.isInDOM) {
+                this.leftElement.style.top = `${this.y}%`;
+                this.rightElement.style.top = `${this.y}%`;
+            }
+            
+            const stillVisible = this.y > -20; // Return true if obstacle still in view
+            
+            // If no longer visible and in DOM, mark for removal
+            if (!stillVisible && this.isInDOM) {
+                this.shouldRemove = true;
+            }
+            
+            return stillVisible;
         }
         
         draw(container) {
-            // Left part of obstacle
-            const leftPart = document.createElement('div');
-            leftPart.className = 'obstacle';
-            leftPart.style.left = '0';
-            leftPart.style.top = `${this.y}%`;
-            leftPart.style.width = `${this.gapPosition}%`;
-            leftPart.style.height = `${this.height}px`;
-            leftPart.style.transform = 'translateY(-50%)'; // Center vertically
-            
-            // Right part of obstacle
-            const rightPart = document.createElement('div');
-            rightPart.className = 'obstacle';
-            rightPart.style.left = `${this.gapPosition + this.gapWidth}%`;
-            rightPart.style.top = `${this.y}%`;
-            rightPart.style.width = `${100 - (this.gapPosition + this.gapWidth)}%`;
-            rightPart.style.height = `${this.height}px`;
-            rightPart.style.transform = 'translateY(-50%)'; // Center vertically
-            
-            container.appendChild(leftPart);
-            container.appendChild(rightPart);
+            // Only append to DOM if not already there
+            if (!this.isInDOM) {
+                this.leftElement.style.top = `${this.y}%`;
+                this.rightElement.style.top = `${this.y}%`;
+                
+                container.appendChild(this.leftElement);
+                container.appendChild(this.rightElement);
+                
+                this.isInDOM = true;
+                this.shouldRemove = false;
+            }
+        }
+        
+        // Remove elements from DOM
+        remove() {
+            if (this.isInDOM) {
+                if (this.leftElement.parentNode) {
+                    this.leftElement.parentNode.removeChild(this.leftElement);
+                }
+                if (this.rightElement.parentNode) {
+                    this.rightElement.parentNode.removeChild(this.rightElement);
+                }
+                this.isInDOM = false;
+            }
         }
         
         // Simple, direct rectangle collision check
@@ -277,33 +349,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return playerRank < 10;
     }
     
-    // Create and update particles
+    // Create and update particles more efficiently
     function updateParticles() {
         const shaft = document.querySelector('.elevator-shaft');
-        shaft.innerHTML = '';
-        shaft.appendChild(elevatorElement);
         
-        // Draw obstacles
-        obstacles.forEach(obstacle => obstacle.draw(shaft));
-        
-        // Add new particles based on speed
-        const particleCount = Math.floor(descentSpeed / 2.5); // Adjusted to create more visible particles
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
+        // Make sure elevator stays in the DOM
+        if (!shaft.contains(elevatorElement)) {
+            shaft.appendChild(elevatorElement);
         }
         
-        // Update and draw existing particles
-        particles = particles.filter(particle => {
-            const stillVisible = particle.update(descentSpeed);
-            if (stillVisible) {
+        // Filter out particles that are no longer visible
+        const visibleParticles = [];
+        
+        particles.forEach(particle => {
+            const isVisible = particle.update(descentSpeed);
+            
+            if (isVisible) {
                 particle.draw(shaft);
+                visibleParticles.push(particle);
+            } else {
+                // Remove from DOM if no longer visible
+                particle.remove();
             }
-            return stillVisible;
         });
         
-        // Limit particles array size
-        if (particles.length > 180) { // Increased for more particles
-            particles = particles.slice(-180);
+        // Update our particles array
+        particles = visibleParticles;
+        
+        // Add new particles based on speed but limit creation when too many exist
+        const maxParticles = 70; // Reduced from original 180 for better performance
+        
+        if (particles.length < maxParticles) {
+            // Limit creation based on speed
+            const particleCount = Math.min(Math.floor(descentSpeed / 4), 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const newParticle = new Particle();
+                newParticle.draw(shaft);
+                particles.push(newParticle);
+            }
         }
     }
     
@@ -392,71 +476,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Set up the main game loop
+    // Set up the main game loop using requestAnimationFrame for better performance
     function setupGameLoop() {
-        gameInterval = setInterval(() => {
+        let lastTimestamp = 0;
+        const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
+        const shaft = document.querySelector('.elevator-shaft');
+        
+        // Main game loop using requestAnimationFrame
+        function gameLoop(timestamp) {
             if (!gameActive) return;
             
-            // Update depth
-            currentDepth += descentSpeed / 100;
-            currentDepthDisplay.textContent = Math.floor(currentDepth);
+            // Calculate time delta
+            const elapsed = timestamp - lastTimestamp;
             
-            // Handle braking
-            if (isBraking && canBrake) {
-                // Consume brake power when braking
-                brakePower -= brakePowerConsumptionRate;
+            // Only update if enough time has passed (helps with performance on high refresh rate displays)
+            if (elapsed > frameInterval) {
+                // Remember last timestamp
+                lastTimestamp = timestamp - (elapsed % frameInterval);
                 
-                // Disable braking if power is depleted
-                if (brakePower <= 0) {
-                    brakePower = 0;
-                    canBrake = false;
-                }
+                // Update depth
+                currentDepth += descentSpeed / 100;
+                currentDepthDisplay.textContent = Math.floor(currentDepth);
                 
-                // Apply stronger braking effect to speed
-                descentSpeed = Math.max(minSpeed, descentSpeed * 0.92); // Stronger deceleration
-            } else {
-                // Regenerate brake power when not braking
-                if (brakePower < maxBrakePower) {
-                    brakePower += brakePowerRegenRate;
-                    if (brakePower >= maxBrakePower) {
-                        brakePower = maxBrakePower;
+                // Handle braking
+                if (isBraking && canBrake) {
+                    // Consume brake power when braking
+                    brakePower -= brakePowerConsumptionRate;
+                    
+                    // Disable braking if power is depleted
+                    if (brakePower <= 0) {
+                        brakePower = 0;
+                        canBrake = false;
                     }
                     
-                    // Re-enable braking if power is sufficient
-                    if (!canBrake && brakePower >= maxBrakePower * 0.2) { // Reduced from 0.25 to re-enable braking sooner
-                        canBrake = true;
+                    // Apply stronger braking effect to speed
+                    descentSpeed = Math.max(minSpeed, descentSpeed * 0.92); // Stronger deceleration
+                } else {
+                    // Regenerate brake power when not braking
+                    if (brakePower < maxBrakePower) {
+                        brakePower += brakePowerRegenRate;
+                        if (brakePower >= maxBrakePower) {
+                            brakePower = maxBrakePower;
+                        }
+                        
+                        // Re-enable braking if power is sufficient
+                        if (!canBrake && brakePower >= maxBrakePower * 0.2) { // Reduced from 0.25 to re-enable braking sooner
+                            canBrake = true;
+                        }
                     }
+                    
+                    // More gradual acceleration when not braking
+                    descentSpeed = Math.min(maxSpeed, descentSpeed * 1.008); // Reduced from 1.01 for slower acceleration
                 }
                 
-                // More gradual acceleration when not braking
-                descentSpeed = Math.min(maxSpeed, descentSpeed * 1.008); // Reduced from 1.01 for slower acceleration
+                // Update brake power display
+                updateBrakePowerDisplay();
+                
+                // Update visuals
+                updateBrakingVisuals();
+                
+                // Draw obstacles - needs to happen before particles for proper z-index
+                obstacles.forEach(obstacle => obstacle.draw(shaft));
+                
+                // Update particles
+                updateParticles();
+                
+                // Update obstacles
+                updateObstacles();
+                
+                // Check for collisions
+                checkCollisions();
+                
+                // Update debug visuals if enabled
+                if (debugMode) {
+                    updateDebugVisuals();
+                }
             }
             
-            // Update brake power display
-            updateBrakePowerDisplay();
-            
-            // Update visuals
-            updateBrakingVisuals();
-            
-            // Update particles
-            updateParticles();
-            
-            // Update obstacles
-            updateObstacles();
-            
-            // Check for collisions
-            checkCollisions();
-            
-            // Update debug visuals if enabled
-            if (debugMode) {
-                updateDebugVisuals();
+            // Schedule next frame
+            if (gameActive) {
+                requestAnimationFrame(gameLoop);
             }
-        }, 1000 / 60); // 60 FPS
+        }
         
-        // Set up obstacle creation
+        // Start the animation loop
+        requestAnimationFrame(gameLoop);
+        
+        // Set up obstacle creation and difficulty progression
         createObstacleInterval();
-        
-        // Increase difficulty over time
         setupDifficultyProgression();
     }
     
@@ -470,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get shaft dimensions
         const shaft = document.querySelector('.elevator-shaft');
-        shaft.innerHTML = '';
+        shaft.innerHTML = ''; // Clear any existing elements
         shaft.appendChild(elevatorElement);
         
         // Update shaft dimensions
@@ -481,8 +589,16 @@ document.addEventListener('DOMContentLoaded', () => {
         descentSpeed = maxSpeed / 3; // Start at lower speed (was maxSpeed/2)
         gameActive = true;
         isBraking = false;
+        
+        // Clean up any existing objects
+        obstacles.forEach(obstacle => obstacle.remove());
+        particles.forEach(particle => particle.remove());
+        
+        // Reset arrays
         obstacles = [];
         particles = [];
+        
+        // Reset game state
         difficultyLevel = 1;
         lastObstacleTime = 0;
         minObstacleSpacing = 4000;
@@ -496,33 +612,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBrakePowerDisplay();
         
         // Clear any existing intervals
-        if (gameInterval) clearInterval(gameInterval);
         if (obstacleInterval) clearInterval(obstacleInterval);
         if (difficultyTimer) clearInterval(difficultyTimer);
         
         // Set up game loop
         setupGameLoop();
-        
-        // Generate new obstacles periodically
-        obstacleInterval = setInterval(() => {
-            if (gameActive && obstacles.length < 8) { // Allow more obstacles with larger shaft
-                generateObstacle();
-            }
-        }, 500); // Check frequently but actual spawning is controlled by minObstacleSpacing
-        
-        // Increase difficulty level over time
-        difficultyTimer = setInterval(() => {
-            if (gameActive) {
-                difficultyLevel = Math.min(difficultyLevel + 0.5, 10);
-                maxSpeed = Math.min(maxSpeed + 1, 30);
-                
-                // Flash the depth display to indicate difficulty increase
-                currentDepthDisplay.style.color = 'var(--danger-color)';
-                setTimeout(() => {
-                    currentDepthDisplay.style.color = 'var(--depth-color)';
-                }, 200);
-            }
-        }, 15000);
     }
     
     // End the game and show results
@@ -530,9 +624,16 @@ document.addEventListener('DOMContentLoaded', () => {
         gameActive = false;
         
         // Clear all intervals
-        if (gameInterval) clearInterval(gameInterval);
         if (obstacleInterval) clearInterval(obstacleInterval);
         if (difficultyTimer) clearInterval(difficultyTimer);
+        
+        // Clean up DOM elements to prevent memory leaks
+        obstacles.forEach(obstacle => obstacle.remove());
+        particles.forEach(particle => particle.remove());
+        
+        // Clear arrays
+        obstacles = [];
+        particles = [];
         
         gameScreen.classList.add('hidden');
         resultsScreen.classList.remove('hidden');
@@ -612,12 +713,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Update obstacles
+    // Update obstacles with better DOM management
     function updateObstacles() {
-        obstacles = obstacles.filter(obstacle => {
+        // Filter out obstacles that are no longer visible
+        const visibleObstacles = [];
+        
+        obstacles.forEach(obstacle => {
             // Update obstacle position
-            return obstacle.update(descentSpeed);
+            const isVisible = obstacle.update(descentSpeed);
+            
+            if (isVisible) {
+                visibleObstacles.push(obstacle);
+            } else {
+                // Remove from DOM if no longer visible
+                obstacle.remove();
+            }
         });
+        
+        // Update our obstacles array
+        obstacles = visibleObstacles;
     }
     
     // Check for collisions with obstacles
