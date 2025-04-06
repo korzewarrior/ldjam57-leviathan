@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let shaftWidth; // Width of the elevator shaft
     let shaftHeight; // Height of the elevator shaft
     let elevatorX = 50; // % position horizontally
-    let elevatorWidth = 60; // px
-    let elevatorHeight = 60; // px
+    let elevatorWidth = 70; // px - updated to match CSS
+    let elevatorHeight = 70; // px - updated to match CSS
     let obstacles = [];
     let particles = [];
     let lastMouseX = 0;
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         obstacles.forEach(obstacle => obstacle.draw(shaft));
         
         // Add new particles based on speed
-        const particleCount = Math.floor(descentSpeed / 3); // Reduced from Math.floor(descentSpeed / 2) to create fewer particles
+        const particleCount = Math.floor(descentSpeed / 2.5); // Adjusted to create more visible particles
         for (let i = 0; i < particleCount; i++) {
             particles.push(new Particle());
         }
@@ -261,8 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Limit particles array size
-        if (particles.length > 150) {
-            particles = particles.slice(-150);
+        if (particles.length > 180) { // Increased for more particles
+            particles = particles.slice(-180);
         }
     }
     
