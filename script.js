@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Get elevator position in pixels
             const elevator = {
                 centerX: (elevatorX / 100) * shaftWidth,
-                centerY: (15 / 100) * shaftHeight, // 15% from top
+                centerY: (10 / 100) * shaftHeight, // 10% from top as per CSS .elevator rule
                 width: elevatorWidth,
                 height: elevatorHeight
             };
@@ -428,8 +428,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Constrain the position within the shaft boundaries
         const constrainedX = Math.max(halfElevatorWidth, Math.min(relativeX, shaftWidth - halfElevatorWidth));
         
-        // Set the position
+        // Set the position in pixels
         elevator.style.left = `${constrainedX}px`;
+        
+        // Update elevatorX as percentage for collision detection
+        elevatorX = (constrainedX / shaftWidth) * 100;
     }
     
     // Handle mouse movement
@@ -839,6 +842,23 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
     });
     
+    // Add a keyboard shortcut to toggle debug mode with D key
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'd') {
+            debugMode = !debugMode;
+            console.log(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`);
+            
+            // Show debug visuals immediately if enabled
+            if (debugMode) {
+                updateDebugVisuals();
+            } else {
+                // Remove all debug elements if disabled
+                const debugElements = document.querySelectorAll('.debug-box');
+                debugElements.forEach(element => element.remove());
+            }
+        }
+    });
+    
     // Load leaderboard from localStorage
     loadLeaderboard();
     // Display initial leaderboard
@@ -937,5 +957,50 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Difficulty increased to ${difficultyLevel}, spacing: ${minObstacleSpacing}`);
             
         }, 18000); // Every 18 seconds
+    }
+    
+    // Update debug visuals to show collision boundaries when debugMode is true
+    function updateDebugVisuals() {
+        // Remove any existing debug elements
+        const existingDebugElements = document.querySelectorAll('.debug-box');
+        existingDebugElements.forEach(element => element.remove());
+        
+        if (!debugMode) return;
+        
+        const shaft = document.querySelector('.elevator-shaft');
+        
+        // Display elevator collision box
+        const elevatorDebug = document.createElement('div');
+        elevatorDebug.className = 'debug-box debug-elevator';
+        
+        // Get elevator dimensions and position
+        const elevatorWidthPx = elevatorWidth;
+        const elevatorHeightPx = elevatorHeight;
+        const elevatorXPx = (elevatorX / 100) * shaftWidth;
+        const elevatorYPx = (10 / 100) * shaftHeight; // 10% from top
+        
+        // Position the debug box
+        elevatorDebug.style.width = `${elevatorWidthPx}px`;
+        elevatorDebug.style.height = `${elevatorHeightPx}px`;
+        elevatorDebug.style.left = `${elevatorXPx - (elevatorWidthPx / 2)}px`;
+        elevatorDebug.style.top = `${elevatorYPx - (elevatorHeightPx / 2)}px`;
+        
+        shaft.appendChild(elevatorDebug);
+        
+        // Display obstacle gaps
+        obstacles.forEach(obstacle => {
+            const obstacleY = (obstacle.y / 100) * shaftHeight;
+            const gapLeft = (obstacle.gapPosition / 100) * shaftWidth;
+            const gapWidth = (obstacle.gapWidth / 100) * shaftWidth;
+            
+            const gapDebug = document.createElement('div');
+            gapDebug.className = 'debug-box debug-gap';
+            gapDebug.style.width = `${gapWidth}px`;
+            gapDebug.style.height = `${obstacle.height}px`;
+            gapDebug.style.left = `${gapLeft}px`;
+            gapDebug.style.top = `${obstacleY - (obstacle.height / 2)}px`;
+            
+            shaft.appendChild(gapDebug);
+        });
     }
 }); 
