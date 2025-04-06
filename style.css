@@ -233,7 +233,7 @@ button:hover {
     margin-top: 0;
     overflow: hidden;
     background-color: rgba(0, 0, 0, 0.3);
-    cursor: move;
+    cursor: none; /* Hide cursor when over the game area */
     transition: all 0.2s ease;
     border-radius: 8px;
     
