@@ -10,6 +10,10 @@
     --depth-color: #00c8ff;
     --obstacle-color: #ff3c5a;
     --brake-color: #ff6600;
+    --background-color: #222;
+    --shaft-color: #1a1a1a;
+    --elevator-color: #555;
+    --brake-color: #FF9800;
 }
 
 * {
@@ -378,4 +382,39 @@ button:hover {
 .debug-gap {
     border-color: lime;
     background-color: rgba(0, 255, 0, 0.1);
+}
+
+/* Game header layout */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    color: var(--text-color);
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+/* Brake power display */
+.brake-power-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brake-power-bar-background {
+    width: 150px;
+    height: 15px;
+    background-color: #444;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.brake-power-bar {
+    height: 100%;
+    width: 100%;
+    background-color: var(--success-color);
+    border-radius: 10px;
+    transition: width 0.3s ease, background-color 0.3s ease;
 } 

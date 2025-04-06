@@ -27,6 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let difficultyTimer;
     let gameActive = false;
     let debugMode = false; // Set to true to see collision boundaries
+    // Brake power variables
+    let maxBrakePower = 100;
+    let brakePower = maxBrakePower;
+    let brakePowerConsumptionRate = 1; // How fast braking consumes power
+    let brakePowerRegenRate = 0.3; // How fast power regenerates when not braking
+    let canBrake = true; // Whether the player can currently brake
     let leaderboard = [];
     let shaftWidth = 0; // Width of the elevator shaft
     let shaftHeight = 0; // Height of the elevator shaft
@@ -332,20 +338,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Apply visual effects for braking
+    // Update visual effects for braking
     function updateBrakingVisuals() {
         const shaft = document.querySelector('.elevator-shaft');
+        const body = document.body;
         
-        if (isBraking) {
-            // Add visual cue for braking
+        if (isBraking && canBrake) {
+            // Add visual cues for braking
             shaft.classList.add('braking');
-            document.body.classList.add('braking');
-            elevatorElement.classList.add('braking');
+            body.classList.add('braking');
         } else {
-            // Remove visual cue
+            // Remove braking visual cues
             shaft.classList.remove('braking');
-            document.body.classList.remove('braking');
-            elevatorElement.classList.remove('braking');
+            body.classList.remove('braking');
         }
     }
     
@@ -359,53 +364,91 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Update brake power display
+    function updateBrakePowerDisplay() {
+        const brakePowerBar = document.getElementById('brakePowerBar');
+        if (brakePowerBar) {
+            // Update the width based on current brake power percentage
+            const powerPercentage = (brakePower / maxBrakePower) * 100;
+            brakePowerBar.style.width = `${powerPercentage}%`;
+            
+            // Change color based on power level
+            if (powerPercentage < 25) {
+                brakePowerBar.style.backgroundColor = 'var(--danger-color)';
+            } else if (powerPercentage < 50) {
+                brakePowerBar.style.backgroundColor = 'var(--brake-color)';
+            } else {
+                brakePowerBar.style.backgroundColor = 'var(--success-color)';
+            }
+        }
+    }
+    
     // Set up the main game loop
     function setupGameLoop() {
-        // First update shaft dimensions to ensure accurate collision detection
-        updateShaftDimensions();
-        
-        // Set up the main game loop
         gameInterval = setInterval(() => {
             if (!gameActive) return;
             
-            // Update speed based on braking state
-            if (isBraking) {
-                descentSpeed = Math.max(descentSpeed - deceleration, minSpeed);
-            } else {
-                descentSpeed = Math.min(descentSpeed + acceleration, maxSpeed);
-            }
-            
-            // Update visuals for braking
-            updateBrakingVisuals();
-            
-            // Update depth (depends on speed)
-            currentDepth += descentSpeed / 10;
+            // Update depth
+            currentDepth += descentSpeed / 100;
             currentDepthDisplay.textContent = Math.floor(currentDepth);
             
-            // Update visual elements
-            updateParticles();
-            
-            // Check for obstacle collisions
-            let collision = false;
-            obstacles = obstacles.filter(obstacle => {
-                // Update obstacle position
-                const stillVisible = obstacle.update(descentSpeed);
+            // Handle braking
+            if (isBraking && canBrake) {
+                // Consume brake power when braking
+                brakePower -= brakePowerConsumptionRate;
                 
-                // Check for collision
-                if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth)) {
-                    collision = true;
-                    console.log("Collision detected!");
+                // Disable braking if power is depleted
+                if (brakePower <= 0) {
+                    brakePower = 0;
+                    canBrake = false;
                 }
                 
-                return stillVisible;
-            });
-            
-            // Game over on collision
-            if (collision) {
-                endGame();
+                // Apply braking effect to speed
+                descentSpeed = Math.max(minSpeed, descentSpeed * 0.95);
+            } else {
+                // Regenerate brake power when not braking
+                if (brakePower < maxBrakePower) {
+                    brakePower += brakePowerRegenRate;
+                    if (brakePower >= maxBrakePower) {
+                        brakePower = maxBrakePower;
+                    }
+                    
+                    // Re-enable braking if power is sufficient
+                    if (!canBrake && brakePower >= maxBrakePower * 0.25) {
+                        canBrake = true;
+                    }
+                }
+                
+                // Increase speed when not braking
+                descentSpeed = Math.min(maxSpeed, descentSpeed * 1.01);
             }
             
-        }, 50);
+            // Update brake power display
+            updateBrakePowerDisplay();
+            
+            // Update visuals
+            updateBrakingVisuals();
+            
+            // Update particles
+            updateParticles();
+            
+            // Update obstacles
+            updateObstacles();
+            
+            // Check for collisions
+            checkCollisions();
+            
+            // Update debug visuals if enabled
+            if (debugMode) {
+                updateDebugVisuals();
+            }
+        }, 1000 / 60); // 60 FPS
+        
+        // Set up obstacle creation
+        createObstacleInterval();
+        
+        // Increase difficulty over time
+        setupDifficultyProgression();
     }
     
     // Start the game
@@ -435,8 +478,13 @@ document.addEventListener('DOMContentLoaded', () => {
         lastObstacleTime = 0;
         minObstacleSpacing = 4000;
         
+        // Reset brake power
+        brakePower = maxBrakePower;
+        canBrake = true;
+        
         // Update displays
         currentDepthDisplay.textContent = '0';
+        updateBrakePowerDisplay();
         
         // Clear any existing intervals
         if (gameInterval) clearInterval(gameInterval);
@@ -553,4 +601,62 @@ document.addEventListener('DOMContentLoaded', () => {
             updateShaftDimensions();
         }
     });
+    
+    // Update obstacles
+    function updateObstacles() {
+        obstacles = obstacles.filter(obstacle => {
+            // Update obstacle position
+            return obstacle.update(descentSpeed);
+        });
+    }
+    
+    // Check for collisions with obstacles
+    function checkCollisions() {
+        let collision = false;
+        
+        obstacles.forEach(obstacle => {
+            // Check if the obstacle is in collision range and hasn't been passed
+            if (!obstacle.passed && obstacle.checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth)) {
+                collision = true;
+                console.log("Collision detected!");
+            }
+        });
+        
+        // End game if collision occurred
+        if (collision) {
+            endGame();
+        }
+    }
+    
+    // Create obstacles periodically
+    function createObstacleInterval() {
+        obstacleInterval = setInterval(() => {
+            if (!gameActive) return;
+            
+            const currentTime = Date.now();
+            // Only create a new obstacle if enough time has passed since the last one
+            if (currentTime - lastObstacleTime >= minObstacleSpacing) {
+                generateObstacle();
+                lastObstacleTime = currentTime;
+            }
+        }, 500); // Check opportunity to create obstacles every 500ms
+    }
+    
+    // Setup difficulty progression
+    function setupDifficultyProgression() {
+        difficultyTimer = setInterval(() => {
+            if (!gameActive) return;
+            
+            difficultyLevel += 0.5;
+            
+            // As difficulty increases, reduce minimum obstacle spacing
+            minObstacleSpacing = Math.max(1500, 4000 - (difficultyLevel * 250));
+            
+            // Increase max speed with difficulty
+            maxSpeed = Math.min(25, 10 + (difficultyLevel * 0.5));
+            
+            console.log(`Difficulty increased to ${difficultyLevel}, spacing: ${minObstacleSpacing}, max speed: ${maxSpeed}`);
+            
+        }, 15000); // Increase difficulty every 15 seconds
+    }
 }); 

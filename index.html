@@ -22,14 +22,16 @@
         </div>
 
         <div class="game-screen hidden" id="gameScreen">
-            <div class="stats">
+            <div class="game-header">
                 <div class="depth-display">
-                    <span id="depthLabel">DEPTH</span>
-                    <span id="currentDepth">0</span>
-                    <span id="depthUnit">m</span>
+                    <span id="playerNameDisplay">PLAYER</span>
+                    <span>DEPTH: <span id="currentDepth">0</span>m</span>
                 </div>
-                <div class="player-info">
-                    <span id="playerNameDisplay"></span>
+                <div class="brake-power-container">
+                    <span>BRAKE POWER:</span>
+                    <div class="brake-power-bar-background">
+                        <div id="brakePowerBar" class="brake-power-bar"></div>
+                    </div>
                 </div>
             </div>
             
