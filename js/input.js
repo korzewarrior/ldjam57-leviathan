@@ -18,8 +18,15 @@ function setPosition(clientX, elevatorShaft, elevator) {
     
     const constrainedX = Math.max(halfElevatorWidth, Math.min(relativeX, shaftWidth - halfElevatorWidth));
     
+    // Save the previous transform to preserve rotation if it exists
+    const currentTransform = elevator.style.transform;
+    const rotationMatch = currentTransform.match(/rotate\(([^)]+)\)/);
+    const currentRotation = rotationMatch ? rotationMatch[1] : '0deg';
+    
+    // Set position while preserving rotation
     elevator.style.left = `${constrainedX}px`;
     
+    // Calculate new elevatorX value as a percentage of shaft width
     elevatorX = (constrainedX / shaftWidth) * 100;
     return elevatorX;
 }
@@ -93,6 +100,14 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
                     elevator.appendChild(trail);
                 }
                 
+                // Ensure propulsion trail exists and is enhanced during phasing
+                let propulsionTrail = elevator.querySelector('.propulsion-trail');
+                if (!propulsionTrail) {
+                    propulsionTrail = document.createElement('div');
+                    propulsionTrail.className = 'propulsion-trail';
+                    elevator.appendChild(propulsionTrail);
+                }
+                
                 // Start creating bubbles on touch devices
                 if (!gameState.bubbleInterval && typeof createBubble === 'function') {
                     gameState.bubbleInterval = setInterval(() => {
@@ -127,6 +142,9 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
             if (trail) {
                 elevator.removeChild(trail);
             }
+            
+            // Keep propulsion trail but let it return to normal state
+            // through CSS transitions
         }
         
         // Clear bubble interval for touch

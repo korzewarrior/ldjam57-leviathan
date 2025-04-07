@@ -341,25 +341,29 @@ button:hover {
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
     animation: phaseEffect 0.3s infinite alternate;
     opacity: 0.9;
+    border-color: rgba(0, 191, 255, 0.8);
 }
 
 .elevator.phasing::before {
-    background-color: rgba(137, 207, 240, 0.7);
+    background-color: var(--phase-color);
+    border-color: rgba(0, 191, 255, 0.8);
     animation: viewportPulse 0.3s infinite alternate;
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.7);
 }
 
 .elevator.phasing::after {
     background-color: var(--phase-color);
+    border-color: rgba(0, 191, 255, 0.8);
     animation: bubbleEmit 0.5s infinite alternate;
     box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
 }
 
 @keyframes viewportPulse {
     0% {
-        box-shadow: 0 0 5px 1px rgba(137, 207, 240, 0.7);
+        box-shadow: 0 0 5px 1px rgba(0, 191, 255, 0.7);
     }
     100% {
-        box-shadow: 0 0 10px 3px rgba(137, 207, 240, 1);
+        box-shadow: 0 0 10px 3px rgba(0, 191, 255, 1);
     }
 }
 
@@ -386,6 +390,8 @@ button:hover {
     animation: phaseTrailVertical 0.8s infinite;
     z-index: 2;
     border-radius: 0 0 10px 10px;
+    /* Make sure the trail is attached properly when submarine rotates */
+    transform-origin: top center;
 }
 
 @keyframes phaseTrailVertical {
@@ -404,9 +410,9 @@ button:hover {
     position: absolute;
     width: 6px;
     height: 6px;
-    background-color: rgba(137, 207, 240, 0.8);
+    background-color: rgba(0, 191, 255, 0.8);
     border-radius: 50%;
-    box-shadow: 0 0 4px rgba(137, 207, 240, 0.5);
+    box-shadow: 0 0 4px rgba(0, 191, 255, 0.5);
     pointer-events: none;
     z-index: 1;
     animation: bubbleFloat 2s ease-out forwards;
@@ -458,27 +464,23 @@ button:hover {
 
 /* Add interior light for phasing */
 .elevator.phasing::before, .elevator.phasing::after {
-    background-color: rgba(85, 85, 85, 0.6);
+    z-index: 1; /* Keep this but remove the background-color setting */
 }
 
 @keyframes phaseEffect {
     from { 
         opacity: 0.7; 
-        transform: translate(-50%, -50%) scale(0.95);
+        transform: translate(-50%, -50%) scale(0.95) rotate(var(--current-rotation, 0deg));
         box-shadow: 0 0 25px rgba(0, 191, 255, 0.7), 0 0 40px rgba(0, 191, 255, 0.3);
     }
     to { 
         opacity: 0.9; 
-        transform: translate(-50%, -50%) scale(1.05);
+        transform: translate(-50%, -50%) scale(1.05) rotate(var(--current-rotation, 0deg));
         box-shadow: 0 0 35px rgba(0, 191, 255, 1), 0 0 60px rgba(0, 191, 255, 0.5);
     }
 }
 
-/* Add a trail effect for phasing */
-.elevator.phasing::before, .elevator.phasing::after {
-    z-index: 1; /* Lower z-index for the doors so the trail can be seen */
-}
-
+/* Remove conflicting trail definition */
 .elevator.phasing .trail {
     content: '';
     position: absolute;
@@ -1098,4 +1100,73 @@ button:hover {
 @keyframes escapingBar {
     from { background-position: 0 0; }
     to { background-position: 20px 0; }
+}
+
+/* Enhanced propulsion trail for submarine */
+.elevator .propulsion-trail {
+    position: absolute;
+    left: 50%;
+    bottom: -15px;
+    width: 10px;
+    height: 0;
+    background: radial-gradient(ellipse at top, rgba(0, 191, 255, 0.4), transparent 70%);
+    transform: translateX(-50%);
+    opacity: 0;
+    border-radius: 50%;
+    z-index: 0;
+    transition: all 0.3s ease;
+}
+
+/* Active propulsion when moving */
+.elevator.moving .propulsion-trail {
+    height: 20px;
+    opacity: 0.5;
+}
+
+/* Enhanced propulsion during phasing */
+.elevator.phasing .propulsion-trail {
+    height: 40px;
+    width: 20px;
+    opacity: 0.8;
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+    animation: propulsionPulse 0.5s infinite alternate;
+}
+
+@keyframes propulsionPulse {
+    0% {
+        height: 30px;
+        opacity: 0.6;
+    }
+    100% {
+        height: 45px;
+        opacity: 0.9;
+    }
+}
+
+/* Make the bubbles more visible */
+.bubble-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: rgba(0, 191, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(0, 191, 255, 0.5);
+    pointer-events: none;
+    z-index: 1;
+    animation: bubbleFloat 2s ease-out forwards;
+}
+
+/* Enhanced bubble animation during phasing */
+.elevator.phasing + .bubble-particle {
+    background-color: rgba(0, 191, 255, 0.9);
+    box-shadow: 0 0 6px rgba(0, 191, 255, 0.8);
+}
+
+/* Make phase effect consistent across all submarine parts */
+.elevator.phasing,
+.elevator.phasing::before,
+.elevator.phasing::after {
+    background-color: var(--phase-color);
+    border-color: rgba(0, 191, 255, 0.8);
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
 } 

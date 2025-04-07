@@ -41,6 +41,10 @@ const gameState = {
     shaftWidth: 0,
     shaftHeight: 0,
     elevatorX: 50,
+    lastElevatorX: 50, // Add this to track previous X position
+    elevatorRotation: 0, // Add this to track current rotation
+    maxRotation: 25, // Maximum rotation in degrees
+    rotationSpeed: 0.2, // How quickly to rotate (0-1)
     elevatorWidth: 40,  // Changed from 70 to 40 for vertical orientation
     elevatorHeight: 70, // Changed from 40 to 70 for vertical orientation
     obstacles: [],
@@ -137,6 +141,14 @@ function initGame() {
                     elevator.appendChild(trail);
                 }
                 
+                // Ensure propulsion trail exists and is enhanced during phasing
+                let propulsionTrail = elevator.querySelector('.propulsion-trail');
+                if (!propulsionTrail) {
+                    propulsionTrail = document.createElement('div');
+                    propulsionTrail.className = 'propulsion-trail';
+                    elevator.appendChild(propulsionTrail);
+                }
+                
                 // Start creating bubbles
                 if (!gameState.bubbleInterval) {
                     gameState.bubbleInterval = setInterval(() => {
@@ -165,6 +177,9 @@ function initGame() {
             if (trail) {
                 elevator.removeChild(trail);
             }
+            
+            // Keep propulsion trail but let it return to normal state
+            // through CSS transitions
         }
         
         // Clear bubble interval
@@ -202,6 +217,12 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         const newElevator = document.createElement('div');
         newElevator.id = 'elevator';
         newElevator.className = 'elevator';
+        
+        // Add propulsion trail
+        const trail = document.createElement('div');
+        trail.className = 'propulsion-trail';
+        newElevator.appendChild(trail);
+        
         elevatorShaft.innerHTML = '';
         elevatorShaft.appendChild(newElevator);
     } else {
@@ -216,6 +237,13 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         // Make sure elevator is in the shaft
         if (!elevatorShaft.contains(elevatorElement)) {
             elevatorShaft.appendChild(elevatorElement);
+        }
+        
+        // Add propulsion trail if it doesn't exist
+        if (!elevatorElement.querySelector('.propulsion-trail')) {
+            const trail = document.createElement('div');
+            trail.className = 'propulsion-trail';
+            elevatorElement.appendChild(trail);
         }
     }
     
@@ -320,6 +348,9 @@ function setupGameLoop() {
             if (frameCount % 5 === 0) {
                 updateDepthDisplay(gameState.currentDepth);
             }
+            
+            // Update submarine orientation
+            updateSubmarineOrientation();
             
             const depthFactor = Math.min(1 + (gameState.currentDepth / 300), 4);
             const currentAcceleration = gameState.baseAcceleration * depthFactor;
@@ -957,6 +988,51 @@ function createBubble(elevator) {
             bubble.parentNode.removeChild(bubble);
         }
     }, 2000);
+}
+
+// Add a new function to update submarine orientation
+function updateSubmarineOrientation() {
+    const elevator = document.getElementById('elevator');
+    if (!elevator) return;
+    
+    // Calculate movement direction and magnitude
+    const xDiff = gameState.elevatorX - gameState.lastElevatorX;
+    
+    // Calculate target rotation based on movement
+    // When moving right, rotate clockwise (positive angle)
+    // When moving left, rotate counter-clockwise (negative angle)
+    const targetRotation = xDiff * gameState.maxRotation;
+    
+    // Smoothly interpolate current rotation towards target
+    gameState.elevatorRotation += (targetRotation - gameState.elevatorRotation) * gameState.rotationSpeed;
+    
+    // Gradually return to vertical when not moving horizontally
+    if (Math.abs(xDiff) < 0.01 && Math.abs(gameState.elevatorRotation) > 0.1) {
+        gameState.elevatorRotation *= 0.9; // Gradually reduce rotation
+    }
+    
+    // Apply rotation transform
+    elevator.style.transform = `translate(-50%, -50%) rotate(${gameState.elevatorRotation}deg)`;
+    
+    // Set CSS custom property for animations to use
+    elevator.style.setProperty('--current-rotation', `${gameState.elevatorRotation}deg`);
+    
+    // Add "moving" class if there's significant movement
+    if (Math.abs(xDiff) > 0.05) {
+        elevator.classList.add('moving');
+        
+        // Create propulsion trail if it doesn't exist
+        if (!elevator.querySelector('.propulsion-trail')) {
+            const trail = document.createElement('div');
+            trail.className = 'propulsion-trail';
+            elevator.appendChild(trail);
+        }
+    } else {
+        elevator.classList.remove('moving');
+    }
+    
+    // Update last position for next frame
+    gameState.lastElevatorX = gameState.elevatorX;
 }
 
 // Export game functions
