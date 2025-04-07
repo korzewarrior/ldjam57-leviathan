@@ -315,16 +315,16 @@ function setupGameLoop() {
                 
                 // Instead of a small boost, give a significant speed surge when phasing
                 if (gameState.phaseBoostActive) {
-                    // Initial activation gives a big boost (30% increase)
-                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.3);
+                    // Initial activation gives a modest boost (15% increase - reduced from 30%)
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.15);
                     
                     gameState.phaseBoostDuration--;
                     if (gameState.phaseBoostDuration <= 0) {
                         gameState.phaseBoostActive = false;
                     }
                 } else {
-                    // Sustained phasing still gives a good boost (5% per frame)
-                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.05);
+                    // Sustained phasing gives a smaller boost (2% per frame - reduced from 5%)
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.02);
                 }
             } else {
                 // Phase boost deactivates when phasing stops
