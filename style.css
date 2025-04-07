@@ -538,8 +538,8 @@ button:hover {
 }
 
 .game-instructions {
-    position: absolute;
-    bottom: 15px;
+    position: relative;
+    bottom: auto;
     left: 0;
     right: 0;
     text-align: center;
@@ -547,7 +547,7 @@ button:hover {
     font-size: 0.9rem;
     color: var(--accent-color);
     background-color: rgba(10, 10, 18, 0.7);
-    border-top: 1px solid var(--accent-color);
+    border-bottom: 1px solid var(--accent-color);
     text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
     z-index: 10;
     max-width: none;
@@ -866,7 +866,7 @@ button:hover {
 .leviathan {
     position: absolute;
     width: 120px;
-    height: 80px;
+    height: 150px;
     top: -15%;
     left: 50%;
     transform: translateX(-50%);
@@ -903,18 +903,18 @@ button:hover {
 
 .leviathan::before {
     width: 25px;
-    height: 60px;
+    height: 100px;
     left: -15px;
-    top: 20px;
+    top: 30px;
     transform-origin: bottom center;
     animation: tentacleWave 3s ease-in-out infinite;
 }
 
 .leviathan::after {
     width: 25px;
-    height: 60px;
+    height: 100px;
     right: -15px;
-    top: 20px;
+    top: 30px;
     transform-origin: bottom center;
     animation: tentacleWave 3s ease-in-out infinite reverse;
 }
@@ -922,8 +922,8 @@ button:hover {
 .leviathan .middle-tentacle {
     position: absolute;
     width: 30px;
-    height: 80px;
-    bottom: -60px;
+    height: 150px;
+    bottom: -130px;
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(114, 9, 183, 0.7);
@@ -936,12 +936,12 @@ button:hover {
 
 @keyframes tentacleWave {
     0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(15deg); }
+    50% { transform: rotate(20deg); }
 }
 
 @keyframes middleTentacleWave {
     0%, 100% { transform: translateX(-50%) rotate(0deg); }
-    50% { transform: translateX(-50%) rotate(10deg); }
+    50% { transform: translateX(-50%) rotate(15deg); }
 }
 
 .leviathan.approaching {
@@ -987,12 +987,12 @@ button:hover {
 
 @keyframes tentacleWaveFast {
     0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(25deg); }
+    50% { transform: rotate(35deg); }
 }
 
 @keyframes middleTentacleWaveFast {
     0%, 100% { transform: translateX(-50%) rotate(0deg); }
-    50% { transform: translateX(-50%) rotate(20deg); }
+    50% { transform: translateX(-50%) rotate(30deg); }
 }
 
 .elevator-shaft.collision {

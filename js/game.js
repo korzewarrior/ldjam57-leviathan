@@ -244,7 +244,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         gameState.leviathanElement.classList.remove('approaching');
         gameState.leviathanElement.classList.remove('close');
         gameState.leviathanElement.style.bottom = '';
-        gameState.leviathanElement.style.top = '-15%';
+        gameState.leviathanElement.style.top = '-25%';
     }
     
     updateShaftDimensions(elevatorShaft);
@@ -559,10 +559,10 @@ function updateLeviathan(frameCount) {
     if (gameState.leviathanDistance <= 0) {
         gameState.leviathanDistance = 0;
         
-        
+        // Game over - leviathan has caught up
         if (gameState.leviathanElement) {
-            
-            gameState.leviathanElement.style.top = '5%';
+            // Position the leviathan directly on screen when game is over
+            gameState.leviathanElement.style.top = '10%';
             gameState.leviathanElement.style.bottom = 'auto'; 
         }
         
@@ -574,11 +574,11 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         
+        // Convert distance to position (0 = caught up, maxDistance = starting position)
+        // With the new longer leviathan, adjust the position range
+        const topPosition = 10 - (normalizedDistance * 80);
         
-        
-        const topPosition = 5 - (normalizedDistance * 55);
-        
-        
+        // Set the position
         gameState.leviathanElement.style.bottom = 'auto';
         gameState.leviathanElement.style.top = `${topPosition}%`;
         
