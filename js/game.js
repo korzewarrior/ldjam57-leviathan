@@ -42,7 +42,7 @@ const gameState = {
     shaftHeight: 0,
     elevatorX: 50,
     elevatorWidth: 70,
-    elevatorHeight: 70,
+    elevatorHeight: 40, // Changed from 70 to 40 to match submarine height
     obstacles: [],
     particles: [],
     difficultyLevel: 1,
@@ -529,7 +529,7 @@ function updateLeviathan(frameCount) {
         // Set final position for leviathan
         if (gameState.leviathanElement) {
             // Fix the position to ensure it stays above the player
-            gameState.leviathanElement.style.top = '0%'; // Changed from 10% to 0% to position the Leviathan higher
+            gameState.leviathanElement.style.top = '-10%'; // Changed from 0% to -10% to position the Leviathan even higher
             gameState.leviathanElement.style.bottom = 'auto'; // Ensure bottom is not set
         }
         
@@ -541,9 +541,9 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         // Convert normalized distance to visual position
-        // When distance is 0, top should be 0% (caught) - changed from 10%
-        // When distance is 100, top should be -20% (far away)
-        const topPosition = 0 - (normalizedDistance * 20); // Changed from 10/30 to 0/20
+        // When distance is 0, top should be -10% (caught) - changed from 0%
+        // When distance is 100, top should be -50% (far away) - changed from -20%
+        const topPosition = -10 - (normalizedDistance * 40); // Changed from 0/20 to -10/40
         
         // Position from the top instead of bottom, and ensure bottom is not set
         gameState.leviathanElement.style.bottom = 'auto';
