@@ -103,7 +103,17 @@ function showResultsScreen(playerName, currentDepth) {
         
         leaderboardElement.addEventListener('touchmove', function(e) {
             e.stopPropagation();
-        }, { passive: true });
+            // Allow default behavior for this element to enable scrolling
+        }, { passive: false });
+        
+        // Add a listener to the leaderboard list for better touch control
+        const leaderboardList = document.getElementById('leaderboardList');
+        if (leaderboardList) {
+            leaderboardList.addEventListener('touchmove', function(e) {
+                e.stopPropagation();
+                // Allow natural scrolling of the list
+            }, { passive: false });
+        }
     }
     
     // Check if this is a new personal best

@@ -1194,14 +1194,24 @@ button:hover {
     .leaderboard {
         -webkit-overflow-scrolling: touch;
         overflow-y: scroll; /* Force scrolling on mobile */
+        overflow-x: hidden;
         touch-action: pan-y; /* Explicitly allow vertical scrolling */
         max-height: 350px; /* Slightly smaller to fit better on mobile */
+        position: relative;
+        z-index: 10; /* Ensure it's above other elements */
+    }
+    
+    #leaderboardList {
+        position: relative;
+        touch-action: pan-y;
+        overflow-y: visible;
+        padding-bottom: 10px; /* Add some padding at bottom for scrolling */
     }
     
     /* Make leaderboard entries easier to tap/scroll on mobile */
     .leaderboard-entry {
-        padding: 10px 12px; /* Larger touch target */
-        min-height: 30px;
+        padding: 12px 12px; /* Larger touch target */
+        min-height: 36px;
     }
     
     /* Ensure the click-to-restart hint is easily visible */
