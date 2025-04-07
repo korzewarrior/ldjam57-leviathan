@@ -288,8 +288,8 @@ button:hover {
 
 .elevator {
     position: absolute;
-    width: 70px;
-    height: 40px;
+    width: 40px;
+    height: 70px;
     border-radius: 20px;
     background-color: var(--submarine-color);
     box-shadow: 0 0 15px rgba(0, 200, 255, 0.3);
@@ -304,7 +304,7 @@ button:hover {
     box-sizing: border-box;
 }
 
-/* Submarine viewport (window) */
+/* Submarine viewport/window - moved to top */
 .elevator::before {
     content: '';
     position: absolute;
@@ -313,26 +313,26 @@ button:hover {
     border-radius: 50%;
     background-color: var(--submarine-window);
     border: 2px solid var(--submarine-detail);
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
+    left: 50%;
+    top: 15px;
+    transform: translateX(-50%);
     z-index: 11;
 }
 
-/* Submarine tail fin */
+/* Submarine tail fin - moved to bottom */
 .elevator::after {
     content: '';
     position: absolute;
-    width: 15px;
-    height: 20px;
+    width: 20px;
+    height: 15px;
     background-color: var(--submarine-color);
     border: 2px solid var(--submarine-detail);
-    border-left: none;
-    right: -8px;
-    top: 50%;
-    transform: translateY(-50%);
+    border-top: none;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 9;
-    border-radius: 0 50% 50% 0;
+    border-radius: 0 0 50% 50%;
 }
 
 /* Phasing animation for submarine */
@@ -350,6 +350,8 @@ button:hover {
 
 .elevator.phasing::after {
     background-color: var(--phase-color);
+    animation: bubbleEmit 0.5s infinite alternate;
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
 }
 
 @keyframes viewportPulse {
@@ -361,33 +363,66 @@ button:hover {
     }
 }
 
-.elevator.phasing .trail {
-    position: absolute;
-    top: 50%;
-    right: -60px;
-    height: 20px;
-    width: 60px;
-    background: linear-gradient(to left, rgba(0, 191, 255, 0), rgba(0, 191, 255, 0.7));
-    transform: translateY(-50%);
-    animation: phaseTrail 0.8s infinite;
-    z-index: 2;
-    border-radius: 0 10px 10px 0;
+@keyframes bubbleEmit {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
+        opacity: 0.7;
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(0, 191, 255, 0.9);
+        opacity: 1;
+    }
 }
 
-@keyframes phaseTrail {
+/* Vertical submarine trail */
+.elevator.phasing .trail {
+    position: absolute;
+    left: 50%;
+    bottom: -60px;
+    width: 20px;
+    height: 60px;
+    background: linear-gradient(to top, rgba(0, 191, 255, 0), rgba(0, 191, 255, 0.7));
+    transform: translateX(-50%);
+    animation: phaseTrailVertical 0.8s infinite;
+    z-index: 2;
+    border-radius: 0 0 10px 10px;
+}
+
+@keyframes phaseTrailVertical {
     0% {
         opacity: 0.2;
-        width: 40px;
+        height: 40px;
     }
     100% {
         opacity: 0.8;
-        width: 60px;
+        height: 60px;
     }
 }
 
-/* Add bubbles for submarine movement */
-.elevator.phasing::before {
-    animation: viewportPulse 0.3s infinite alternate;
+/* Bubble particles */
+.bubble-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: rgba(137, 207, 240, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(137, 207, 240, 0.5);
+    pointer-events: none;
+    z-index: 1;
+    animation: bubbleFloat 2s ease-out forwards;
+}
+
+@keyframes bubbleFloat {
+    0% {
+        transform: translateY(0) translateX(-50%);
+        opacity: 0.8;
+        scale: 0.5;
+    }
+    100% {
+        transform: translateY(-40px) translateX(calc(-50% + 15px));
+        opacity: 0;
+        scale: 1.2;
+    }
 }
 
 .elevator.normalizing-speed {
@@ -917,15 +952,16 @@ button:hover {
     overflow: visible;
 }
 
+/* Leviathan tentacles - extend further down */
 .leviathan::before,
 .leviathan::after {
     content: '';
     position: absolute;
     width: 15px;
-    height: 50px;
+    height: 90px;
     background-color: var(--leviathan-color);
     border-radius: 0 0 10px 10px;
-    bottom: -40px;
+    bottom: -80px;
     animation: tentacleWave 2s infinite alternate ease-in-out;
 }
 
@@ -944,10 +980,10 @@ button:hover {
 .leviathan .middle-tentacle {
     position: absolute;
     width: 20px;
-    height: 60px;
+    height: 120px;
     background-color: var(--leviathan-color);
     border-radius: 0 0 10px 10px;
-    bottom: -50px;
+    bottom: -110px;
     left: 50%;
     transform: translateX(-50%);
     animation: middleTentacleWave 2.5s infinite alternate ease-in-out;
@@ -959,8 +995,8 @@ button:hover {
 }
 
 @keyframes middleTentacleWave {
-    0% { height: 60px; }
-    100% { height: 80px; }
+    0% { height: 120px; }
+    100% { height: 160px; }
 }
 
 .leviathan.approaching {

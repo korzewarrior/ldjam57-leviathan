@@ -80,6 +80,7 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
             }
             
             // Add phase effect to elevator
+            const elevator = document.getElementById('elevator');
             if (elevator) {
                 elevator.classList.add('phasing');
                 elevator.classList.remove('normalizing-speed');
@@ -90,6 +91,18 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
                     trail = document.createElement('div');
                     trail.className = 'trail';
                     elevator.appendChild(trail);
+                }
+                
+                // Start creating bubbles on touch devices
+                if (!gameState.bubbleInterval && typeof createBubble === 'function') {
+                    gameState.bubbleInterval = setInterval(() => {
+                        if (gameState.isPhasing && gameState.gameActive) {
+                            createBubble(elevator);
+                        } else {
+                            clearInterval(gameState.bubbleInterval);
+                            gameState.bubbleInterval = null;
+                        }
+                    }, 200);
                 }
             }
             
@@ -105,6 +118,7 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
         gameState.isPhasing = false;
         
         // Remove phase effect from elevator
+        const elevator = document.getElementById('elevator');
         if (elevator) {
             elevator.classList.remove('phasing');
             
@@ -113,6 +127,12 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
             if (trail) {
                 elevator.removeChild(trail);
             }
+        }
+        
+        // Clear bubble interval for touch
+        if (gameState.bubbleInterval) {
+            clearInterval(gameState.bubbleInterval);
+            gameState.bubbleInterval = null;
         }
     });
 

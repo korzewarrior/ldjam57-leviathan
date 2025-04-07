@@ -41,8 +41,8 @@ const gameState = {
     shaftWidth: 0,
     shaftHeight: 0,
     elevatorX: 50,
-    elevatorWidth: 70,
-    elevatorHeight: 40, // Changed from 70 to 40 to match submarine height
+    elevatorWidth: 40,  // Changed from 70 to 40 for vertical orientation
+    elevatorHeight: 70, // Changed from 40 to 70 for vertical orientation
     obstacles: [],
     particles: [],
     difficultyLevel: 1,
@@ -58,7 +58,8 @@ const gameState = {
     collisionCooldown: 0,
     maxCollisionCooldown: 60, // frames
     leviathanElement: null,
-    phaseSound: null
+    phaseSound: null,
+    bubbleInterval: null
 };
 
 // Initialize the game
@@ -128,12 +129,24 @@ function initGame() {
                 elevator.classList.add('phasing');
                 elevator.classList.remove('normalizing-speed');
                 
-                // Add or update the trail element
+                // Add or update the trail element for vertical orientation
                 let trail = elevator.querySelector('.trail');
                 if (!trail) {
                     trail = document.createElement('div');
                     trail.className = 'trail';
                     elevator.appendChild(trail);
+                }
+                
+                // Start creating bubbles
+                if (!gameState.bubbleInterval) {
+                    gameState.bubbleInterval = setInterval(() => {
+                        if (gameState.isPhasing && gameState.gameActive) {
+                            createBubble(elevator);
+                        } else {
+                            clearInterval(gameState.bubbleInterval);
+                            gameState.bubbleInterval = null;
+                        }
+                    }, 200);
                 }
             }
         }
@@ -152,6 +165,12 @@ function initGame() {
             if (trail) {
                 elevator.removeChild(trail);
             }
+        }
+        
+        // Clear bubble interval
+        if (gameState.bubbleInterval) {
+            clearInterval(gameState.bubbleInterval);
+            gameState.bubbleInterval = null;
         }
     });
     
@@ -903,6 +922,41 @@ function updatePhasingVisuals(isPhasing, canPhase) {
         elevatorShaft.classList.remove('phasing');
         body.classList.remove('phasing');
     }
+}
+
+// Function to create bubbles when phasing
+function createBubble(elevator) {
+    const elevatorShaft = document.querySelector('.elevator-shaft');
+    if (!elevatorShaft || !elevator) return;
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble-particle';
+    
+    // Get elevator position
+    const elevatorRect = elevator.getBoundingClientRect();
+    const shaftRect = elevatorShaft.getBoundingClientRect();
+    
+    // Position bubble beneath submarine
+    const bubbleX = (elevatorRect.left + elevatorRect.right) / 2 - shaftRect.left;
+    const bubbleY = elevatorRect.bottom - 10 - shaftRect.top;
+    
+    bubble.style.left = `${bubbleX}px`;
+    bubble.style.top = `${bubbleY}px`;
+    
+    // Randomize bubble properties slightly
+    bubble.style.width = `${4 + Math.random() * 4}px`;
+    bubble.style.height = bubble.style.width;
+    bubble.style.opacity = `${0.6 + Math.random() * 0.4}`;
+    
+    // Add bubble to shaft
+    elevatorShaft.appendChild(bubble);
+    
+    // Remove bubble after animation completes
+    setTimeout(() => {
+        if (bubble.parentNode) {
+            bubble.parentNode.removeChild(bubble);
+        }
+    }, 2000);
 }
 
 // Export game functions
