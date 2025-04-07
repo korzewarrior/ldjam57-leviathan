@@ -47,8 +47,8 @@ const gameState = {
     // New Leviathan properties
     leviathanDistance: 100, // Distance from player (0-100, 0 means caught)
     maxLeviathanDistance: 100,
-    leviathanSpeed: 0.05, // Reduced from 0.1 to make it easier initially
-    collisionSlowdownFactor: 3, // Reduced from 5 to make collisions less punishing
+    leviathanSpeed: 0.03, // Reduced further to make it easier initially
+    collisionSlowdownFactor: 2.5, // Reduced to make collisions less punishing
     recentlyCollided: false,
     collisionCooldown: 0,
     maxCollisionCooldown: 60, // frames
@@ -338,33 +338,80 @@ function updateLeviathan(frameCount) {
     let baseApproachRate = gameState.leviathanSpeed;
     
     // Leviathan gets faster as depth increases
-    const depthFactor = Math.min(1 + (gameState.currentDepth / 500), 3);
+    const depthFactor = Math.min(1 + (gameState.currentDepth / 500), 2.5); // Reduced max factor
     baseApproachRate *= depthFactor;
     
     // Leviathan catches up faster when player is slow
-    const speedFactor = Math.max(0.5, Math.min(2.0, gameState.descentSpeed / 15));
+    const speedFactor = Math.max(0.5, Math.min(2.5, gameState.descentSpeed / 15));
     const approachRate = baseApproachRate / speedFactor;
     
+    // Track if player is escaping 
+    let isEscaping = false;
+    
     // When player is going fast, they can create some distance
-    if (gameState.descentSpeed > 25 && !gameState.recentlyCollided) {
-        // Player can slowly increase distance by going fast
+    if (gameState.descentSpeed > 20 && !gameState.recentlyCollided) { // Lowered threshold from 25 to 20
+        // Player can increase distance by going fast
+        const previousDistance = gameState.leviathanDistance;
         gameState.leviathanDistance = Math.min(
             gameState.maxLeviathanDistance, 
-            gameState.leviathanDistance + (gameState.descentSpeed - 25) * 0.01
+            gameState.leviathanDistance + (gameState.descentSpeed - 20) * 0.03 // Increased from 0.01 to 0.03
         );
+        
+        // Check if we're actually gaining distance
+        isEscaping = gameState.leviathanDistance > previousDistance;
     } else {
         // Reduce distance (leviathan gets closer)
         gameState.leviathanDistance -= approachRate;
+        isEscaping = false;
+    }
+    
+    // Apply visual effects for escaping
+    const elevatorShaft = document.querySelector('.elevator-shaft');
+    const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
+    
+    if (isEscaping) {
+        // Add visual feedback when escaping
+        if (gameState.leviathanElement) {
+            gameState.leviathanElement.classList.add('escaping');
+            gameState.leviathanElement.classList.remove('approaching', 'close');
+        }
+        
+        if (elevatorShaft) {
+            elevatorShaft.classList.add('escaping');
+        }
+        
+        if (leviathanDistanceBar) {
+            leviathanDistanceBar.classList.add('escaping');
+        }
+    } else {
+        // Remove escaping visual feedback
+        if (gameState.leviathanElement) {
+            gameState.leviathanElement.classList.remove('escaping');
+        }
+        
+        if (elevatorShaft) {
+            elevatorShaft.classList.remove('escaping');
+        }
+        
+        if (leviathanDistanceBar) {
+            leviathanDistanceBar.classList.remove('escaping');
+        }
     }
     
     // If there was a recent collision, leviathan gains ground faster
     if (gameState.recentlyCollided) {
-        gameState.leviathanDistance -= baseApproachRate * 1.5; // Reduced from 2x to 1.5x
+        gameState.leviathanDistance -= baseApproachRate * 1.2; // Reduced from 1.5x to 1.2x
     }
     
     // Check if leviathan caught the player
     if (gameState.leviathanDistance <= 0) {
         gameState.leviathanDistance = 0;
+        
+        // Set final position for leviathan
+        if (gameState.leviathanElement) {
+            gameState.leviathanElement.style.top = '15%'; // Fixed position when catching player
+        }
+        
         endGame();
         return;
     }
@@ -373,24 +420,26 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         // Convert normalized distance to visual position
-        // When distance is 0, top should be 10% (caught)
+        // When distance is 0, top should be 15% (caught)
         // When distance is 100, top should be -20% (far away)
-        const topPosition = 10 - (normalizedDistance * 30);
+        const topPosition = 15 - (normalizedDistance * 35);
         
         // Position from the top instead of bottom
         gameState.leviathanElement.style.bottom = '';
         gameState.leviathanElement.style.top = `${topPosition}%`;
         
-        // Add visual indicators when leviathan is close
-        if (normalizedDistance < 0.3) {
-            gameState.leviathanElement.classList.add('close');
-            gameState.leviathanElement.classList.remove('approaching');
-        } else if (normalizedDistance < 0.5) {
-            gameState.leviathanElement.classList.add('approaching');
-            gameState.leviathanElement.classList.remove('close');
-        } else {
-            gameState.leviathanElement.classList.remove('approaching');
-            gameState.leviathanElement.classList.remove('close');
+        // Add visual indicators when leviathan is close (only if not escaping)
+        if (!isEscaping) {
+            if (normalizedDistance < 0.3) {
+                gameState.leviathanElement.classList.add('close');
+                gameState.leviathanElement.classList.remove('approaching');
+            } else if (normalizedDistance < 0.5) {
+                gameState.leviathanElement.classList.add('approaching');
+                gameState.leviathanElement.classList.remove('close');
+            } else {
+                gameState.leviathanElement.classList.remove('approaching');
+                gameState.leviathanElement.classList.remove('close');
+            }
         }
     }
 }
@@ -603,8 +652,8 @@ function setupDifficultyProgression() {
         gameState.difficultyLevel += 0.3;
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
-        // Increase leviathan speed as difficulty increases, but more slowly
-        gameState.leviathanSpeed += 0.005; // Reduced from 0.01
+        // Increase leviathan speed as difficulty increases, but very slowly
+        gameState.leviathanSpeed += 0.003; // Reduced from 0.005
         
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
