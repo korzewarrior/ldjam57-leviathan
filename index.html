@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEVIATHAN | Descent</title>
+    <title>LEVIATHAN | Escape</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
         <div class="welcome-screen" id="welcomeScreen">
             <h1>LEVIATHAN</h1>
-            <p>Descend as deep as you can before the beast catches you!</p>
+            <p>Escape the depths as the Leviathan hunts you!</p>
             <div class="input-container">
                 <input type="text" id="playerName" placeholder="ENTER YOUR NAME" maxlength="15">
-                <button id="startButton">BEGIN DESCENT</button>
+                <button id="startButton">BEGIN ESCAPE</button>
             </div>
             <p style="font-size: 0.9rem; margin-top: 1rem;">
-                CLICK to activate PHASE DRIVE<br>
+                CLICK to activate DIVE<br>
                 MOVE MOUSE to navigate obstacles
             </p>
         </div>
 
         <div class="game-screen hidden" id="gameScreen">
             <div class="game-instructions">
-                MOVE to navigate obstacles - CLICK to phase through walls - ESCAPE THE LEVIATHAN
+                MOVE to navigate - CLICK to dive through walls - STAY AHEAD OF THE LEVIATHAN
             </div>
             
             <div class="game-header">
@@ -36,7 +36,7 @@
                     </div>
                 </div>
                 <div class="brake-power-container">
-                    <span>PHASE DRIVE</span>
+                    <span>DIVE</span>
                     <div class="brake-power-bar-background">
                         <div id="brakePowerBar" class="brake-power-bar"></div>
                     </div>
@@ -59,16 +59,16 @@
         </div>
 
         <div class="results-screen hidden" id="resultsScreen">
-            <h2>DESCENT COMPLETE</h2>
-            <p>You reached a depth of <span id="finalDepth">0</span>m before the Leviathan caught you</p>
+            <h2>ESCAPE FAILED</h2>
+            <p>You reached <span id="finalDepth">0</span>m before the Leviathan caught you</p>
             <div class="high-score-message" id="highScoreMessage"></div>
             
             <div class="leaderboard">
-                <h3>DEEPEST DESCENTS</h3>
+                <h3>GREATEST ESCAPES</h3>
                 <div id="leaderboardList"></div>
             </div>
             
-            <button id="playAgainButton">DESCEND AGAIN</button>
+            <button id="playAgainButton">TRY AGAIN</button>
         </div>
     </div>
 
