@@ -721,15 +721,15 @@ button:hover {
     height: 120px;
     background-color: var(--leviathan-color);
     position: absolute;
-    bottom: -20%;
+    top: -20%;
     left: 50%;
     transform: translate(-50%, 0) scaleY(0.8);
     box-shadow: 
         0 0 30px rgba(114, 9, 183, 0.8),
         0 0 50px rgba(114, 9, 183, 0.3);
     z-index: 9;
-    border-radius: 50% 50% 0 0;
-    transition: bottom 0.5s ease-out;
+    border-radius: 0 0 50% 50%;
+    transition: top 0.5s ease-out;
     
     /* Tentacles using pseudo-elements */
     overflow: visible;
@@ -742,25 +742,25 @@ button:hover {
     height: 60px;
     background-color: var(--leviathan-color);
     border-radius: 15px;
-    top: -20px;
+    bottom: -20px;
     animation: tentacleWave 3s infinite alternate ease-in-out;
 }
 
 .leviathan::before {
     left: 20px;
-    transform: rotate(-30deg);
+    transform: rotate(30deg);
     animation-delay: 0.5s;
 }
 
 .leviathan::after {
     right: 20px;
-    transform: rotate(30deg);
+    transform: rotate(-30deg);
     animation-delay: 0s;
 }
 
 @keyframes tentacleWave {
-    0%, 100% { transform: rotate(-30deg) translateY(0); }
-    50% { transform: rotate(-45deg) translateY(-10px); }
+    0%, 100% { transform: rotate(30deg) translateY(0); }
+    50% { transform: rotate(45deg) translateY(10px); }
 }
 
 .leviathan.approaching {

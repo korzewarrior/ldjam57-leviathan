@@ -47,8 +47,8 @@ const gameState = {
     // New Leviathan properties
     leviathanDistance: 100, // Distance from player (0-100, 0 means caught)
     maxLeviathanDistance: 100,
-    leviathanSpeed: 0.1, // How fast the leviathan approaches normally
-    collisionSlowdownFactor: 5, // How much a collision slows you down
+    leviathanSpeed: 0.05, // Reduced from 0.1 to make it easier initially
+    collisionSlowdownFactor: 3, // Reduced from 5 to make collisions less punishing
     recentlyCollided: false,
     collisionCooldown: 0,
     maxCollisionCooldown: 60, // frames
@@ -146,7 +146,8 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         gameState.leviathanElement.classList.remove('hidden');
         gameState.leviathanElement.classList.remove('approaching');
         gameState.leviathanElement.classList.remove('close');
-        gameState.leviathanElement.style.bottom = '-20%';
+        gameState.leviathanElement.style.bottom = '';
+        gameState.leviathanElement.style.top = '-20%';
     }
     
     updateShaftDimensions(elevatorShaft);
@@ -341,15 +342,24 @@ function updateLeviathan(frameCount) {
     baseApproachRate *= depthFactor;
     
     // Leviathan catches up faster when player is slow
-    const speedFactor = Math.max(0.5, Math.min(1.5, gameState.descentSpeed / 15));
+    const speedFactor = Math.max(0.5, Math.min(2.0, gameState.descentSpeed / 15));
     const approachRate = baseApproachRate / speedFactor;
     
-    // Reduce distance (leviathan gets closer)
-    gameState.leviathanDistance -= approachRate;
+    // When player is going fast, they can create some distance
+    if (gameState.descentSpeed > 25 && !gameState.recentlyCollided) {
+        // Player can slowly increase distance by going fast
+        gameState.leviathanDistance = Math.min(
+            gameState.maxLeviathanDistance, 
+            gameState.leviathanDistance + (gameState.descentSpeed - 25) * 0.01
+        );
+    } else {
+        // Reduce distance (leviathan gets closer)
+        gameState.leviathanDistance -= approachRate;
+    }
     
     // If there was a recent collision, leviathan gains ground faster
     if (gameState.recentlyCollided) {
-        gameState.leviathanDistance -= baseApproachRate * 2;
+        gameState.leviathanDistance -= baseApproachRate * 1.5; // Reduced from 2x to 1.5x
     }
     
     // Check if leviathan caught the player
@@ -363,10 +373,13 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         // Convert normalized distance to visual position
-        // When distance is 0, bottom should be 10% (caught)
-        // When distance is 100, bottom should be -20% (far away)
-        const bottomPosition = 10 - (normalizedDistance * 30);
-        gameState.leviathanElement.style.bottom = `${bottomPosition}%`;
+        // When distance is 0, top should be 10% (caught)
+        // When distance is 100, top should be -20% (far away)
+        const topPosition = 10 - (normalizedDistance * 30);
+        
+        // Position from the top instead of bottom
+        gameState.leviathanElement.style.bottom = '';
+        gameState.leviathanElement.style.top = `${topPosition}%`;
         
         // Add visual indicators when leviathan is close
         if (normalizedDistance < 0.3) {
@@ -590,8 +603,8 @@ function setupDifficultyProgression() {
         gameState.difficultyLevel += 0.3;
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
-        // Increase leviathan speed as difficulty increases
-        gameState.leviathanSpeed += 0.01;
+        // Increase leviathan speed as difficulty increases, but more slowly
+        gameState.leviathanSpeed += 0.005; // Reduced from 0.01
         
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
@@ -658,7 +671,7 @@ function checkCollisions() {
         gameState.collisionCooldown = gameState.maxCollisionCooldown;
         
         // Decrease leviathan distance (leviathan gets closer)
-        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 10);
+        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 5); // Reduced from 10 to 5
         
         // If leviathan catches player, end the game
         if (gameState.leviathanDistance <= 0) {
