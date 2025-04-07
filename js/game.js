@@ -89,7 +89,7 @@ function initGame() {
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
     });
     
-    // Add click event to results screen to restart game
+    
     resultsScreen.addEventListener('click', () => {
         resultsScreen.classList.add('hidden');
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
@@ -183,8 +183,11 @@ function initGame() {
     });
     
     
-    loadLeaderboard();
-    displayLeaderboard();
+    loadLeaderboard().then(() => {
+        displayLeaderboard();
+    }).catch(error => {
+        console.error('Error loading leaderboard:', error);
+    });
     
     
     window.addEventListener('resize', () => {
@@ -559,9 +562,9 @@ function updateLeviathan(frameCount) {
     if (gameState.leviathanDistance <= 0) {
         gameState.leviathanDistance = 0;
         
-        // Game over - leviathan has caught up
+        
         if (gameState.leviathanElement) {
-            // Position the leviathan directly on screen when game is over
+            
             gameState.leviathanElement.style.top = '-10%';
             gameState.leviathanElement.style.bottom = 'auto'; 
         }
@@ -574,11 +577,11 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         
-        // Convert distance to position (0 = caught up, maxDistance = starting position)
-        // With the new longer leviathan, adjust the position range
+        
+        
         const topPosition = -10 - (normalizedDistance * 70);
         
-        // Set the position
+        
         gameState.leviathanElement.style.bottom = 'auto';
         gameState.leviathanElement.style.top = `${topPosition}%`;
         
@@ -956,31 +959,31 @@ function updateSubmarineOrientation() {
     const elevator = document.getElementById('elevator');
     if (!elevator) return;
     
-    // Calculate the movement direction based on the difference in position
+    
     const xDiff = gameState.elevatorX - gameState.lastElevatorX;
     
-    // Invert the rotation calculation to fix the backwards aiming
+    
     const targetRotation = -xDiff * gameState.maxRotation;
     
-    // Smooth transition to the target rotation
+    
     gameState.elevatorRotation += (targetRotation - gameState.elevatorRotation) * gameState.rotationSpeed;
     
-    // Gradually reduce rotation when not moving horizontally
+    
     if (Math.abs(xDiff) < 0.01 && Math.abs(gameState.elevatorRotation) > 0.1) {
         gameState.elevatorRotation *= 0.9; 
     }
     
-    // Apply the rotation transform
+    
     elevator.style.transform = `translate(-50%, -50%) rotate(${gameState.elevatorRotation}deg)`;
     
-    // Store the current rotation for CSS animations
+    
     elevator.style.setProperty('--current-rotation', `${gameState.elevatorRotation}deg`);
     
-    // Add 'moving' class and ensure propulsion trail exists when moving
+    
     if (Math.abs(xDiff) > 0.05) {
         elevator.classList.add('moving');
         
-        // Ensure propulsion trail exists
+        
         if (!elevator.querySelector('.propulsion-trail')) {
             const trail = document.createElement('div');
             trail.className = 'propulsion-trail';
@@ -990,7 +993,7 @@ function updateSubmarineOrientation() {
         elevator.classList.remove('moving');
     }
     
-    // Update the last position
+    
     gameState.lastElevatorX = gameState.elevatorX;
 }
 export { 

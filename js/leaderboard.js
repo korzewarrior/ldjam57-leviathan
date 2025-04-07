@@ -1,27 +1,32 @@
+import { db } from './firebase-config.js';
+
 let leaderboard = [];
-function loadLeaderboard() {
-    const savedLeaderboard = localStorage.getItem('deepDescentLeaderboard');
-    if (savedLeaderboard) {
-        try {
-            leaderboard = JSON.parse(savedLeaderboard);
-        } catch (e) {
-            leaderboard = [];
-        }
-    }
-}
-function saveLeaderboard() {
+
+async function loadLeaderboard() {
     try {
-        localStorage.setItem('deepDescentLeaderboard', JSON.stringify(leaderboard));
+        const leaderboardRef = db.collection('leaderboard');
+        const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(50).get();
+        
+        leaderboard = [];
+        snapshot.forEach(doc => {
+            leaderboard.push(doc.data());
+        });
+        
+        console.log('Leaderboard loaded from Firebase');
     } catch (e) {
-        console.error('Failed to save leaderboard:', e);
+        console.error('Failed to load leaderboard from Firebase:', e);
+        leaderboard = [];
     }
 }
-function displayLeaderboard() {
+
+async function displayLeaderboard() {
     const leaderboardList = document.getElementById('leaderboardList');
     leaderboardList.innerHTML = '';
     
-    const sortedLeaderboard = [...leaderboard].sort((a, b) => b.depth - a.depth);
-    const topEntries = sortedLeaderboard.slice(0, 10);
+    // Make sure we have the latest data
+    await loadLeaderboard();
+    
+    const topEntries = leaderboard.slice(0, 10);
     
     if (topEntries.length === 0) {
         const emptyMessage = document.createElement('div');
@@ -55,7 +60,8 @@ function displayLeaderboard() {
         leaderboardList.appendChild(entryElement);
     });
 }
-function checkHighScore(playerName, depth) {
+
+async function checkHighScore(playerName, depth) {
     if (!playerName.trim()) return false;
     
     const newScore = {
@@ -64,23 +70,28 @@ function checkHighScore(playerName, depth) {
         date: new Date().toISOString()
     };
     
-    leaderboard.push(newScore);
-    
-    const sortedLeaderboard = [...leaderboard].sort((a, b) => b.depth - a.depth);
-    
-    const playerRank = sortedLeaderboard.findIndex(entry => 
-        entry.name === newScore.name && 
-        Math.abs(entry.depth - newScore.depth) < 0.1 &&
-        entry.date === newScore.date);
-    
-    leaderboard = sortedLeaderboard.slice(0, 50);
-    saveLeaderboard();
-    
-    return playerRank < 10;
+    try {
+        // Add the new score to Firebase
+        await db.collection('leaderboard').add(newScore);
+        
+        // Refresh our local copy of the leaderboard
+        await loadLeaderboard();
+        
+        // Find the player's rank
+        const playerRank = leaderboard.findIndex(entry => 
+            entry.name === newScore.name && 
+            Math.abs(entry.depth - newScore.depth) < 0.1 &&
+            entry.date === newScore.date);
+        
+        return playerRank < 10;
+    } catch (e) {
+        console.error('Failed to submit score to Firebase:', e);
+        return false;
+    }
 }
+
 export { 
     loadLeaderboard, 
-    saveLeaderboard, 
     displayLeaderboard, 
     checkHighScore 
 }; 

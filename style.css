@@ -188,7 +188,7 @@ button {
     transition: all 0.2s;
 }
 
-/* Add specific style for the start button to span the full width */
+
 #startButton {
     width: 100%;
     display: block;
@@ -871,18 +871,18 @@ button:hover {
     width: 25px;
     height: 100px;
     left: -15px;
-    top: 30px;
-    transform-origin: bottom center;
-    animation: tentacleWave 3s ease-in-out infinite;
+    bottom: -80px;
+    transform-origin: top center;
+    animation: sideTentacleWave 3s ease-in-out infinite;
 }
 
 .leviathan::after {
     width: 25px;
     height: 100px;
     right: -15px;
-    top: 30px;
-    transform-origin: bottom center;
-    animation: tentacleWave 3s ease-in-out infinite reverse;
+    bottom: -80px;
+    transform-origin: top center;
+    animation: sideTentacleWave 3s ease-in-out infinite reverse;
 }
 
 .leviathan .middle-tentacle {
@@ -900,9 +900,9 @@ button:hover {
     animation: middleTentacleWave 4s ease-in-out infinite;
 }
 
-@keyframes tentacleWave {
+@keyframes sideTentacleWave {
     0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(20deg); }
+    50% { transform: rotate(-15deg); }
 }
 
 @keyframes middleTentacleWave {
@@ -940,15 +940,20 @@ button:hover {
 }
 
 .leviathan.close::before {
-    animation: tentacleWaveFast 1s ease-in-out infinite;
+    animation: sideTentacleWaveFast 1s ease-in-out infinite;
 }
 
 .leviathan.close::after {
-    animation: tentacleWaveFast 1s ease-in-out infinite reverse;
+    animation: sideTentacleWaveFast 1s ease-in-out infinite reverse;
 }
 
 .leviathan.close .middle-tentacle {
     animation: middleTentacleWaveFast 1.5s ease-in-out infinite;
+}
+
+@keyframes sideTentacleWaveFast {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-30deg); }
 }
 
 @keyframes tentacleWaveFast {

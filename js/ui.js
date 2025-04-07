@@ -85,12 +85,17 @@ function showResultsScreen(playerName, currentDepth) {
     const finalDepth = Math.floor(currentDepth);
     finalDepthDisplay.textContent = finalDepth;
     
-    // Still check for high score but don't display a message
-    checkHighScore(playerName, currentDepth);
     
-    displayLeaderboard();
+    checkHighScore(playerName, currentDepth)
+        .then(isHighScore => {
+            return displayLeaderboard();
+        })
+        .catch(error => {
+            console.error('Error updating leaderboard:', error);
+            displayLeaderboard();
+        });
     
-    // Add a hint message
+    
     let hintElement = document.getElementById('clickToRestartHint');
     if (!hintElement) {
         hintElement = document.createElement('p');
