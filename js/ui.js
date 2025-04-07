@@ -1,5 +1,5 @@
 import { checkHighScore, displayLeaderboard } from './leaderboard.js';
-import { VERSION } from '../version.js';
+import { VERSION } from './version.js';
 
 function updateDepthDisplay(currentDepth) {
     const currentDepthDisplay = document.getElementById('currentDepth');

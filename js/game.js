@@ -5,7 +5,8 @@ import {
     updateBrakingVisuals,
     showGameScreen, 
     showResultsScreen,
-    updateDebugVisuals
+    updateDebugVisuals,
+    showWelcomeScreen
 } from './ui.js';
 import { loadLeaderboard, displayLeaderboard, initLocalHighScore, updatePersonalBestDisplay } from './leaderboard.js';
 import { setupInputHandlers } from './input.js';
@@ -79,6 +80,8 @@ function initGame() {
     initLocalHighScore();
     updatePersonalBestDisplay();
     
+    // Ensure the welcome screen is displayed and version is updated
+    showWelcomeScreen();
     
     try {
         gameState.phaseSound = new Audio();
