@@ -9,7 +9,8 @@
     --panel-color: #121222;
     --depth-color: #00c8ff;
     --obstacle-color: #ff3c5a;
-    --brake-color: #ff6600;
+    --phase-color: #00bfff;
+    --phase-alt-color: #8a2be2;
     --background-color: #222;
     --shaft-color: #1a1a1a;
     --elevator-color: #555;
@@ -48,6 +49,13 @@ body.braking {
     background-image: 
         linear-gradient(to bottom, rgba(30, 15, 5, 0.3), rgba(30, 15, 5, 0.6)),
         radial-gradient(circle at 50% 70%, rgba(255, 102, 0, 0.05), transparent 70%);
+}
+
+body.phasing {
+    background-color: rgba(0, 30, 60, 1);
+    background-image: 
+        linear-gradient(to bottom, rgba(0, 30, 60, 0.3), rgba(0, 30, 60, 0.6)),
+        radial-gradient(circle at 50% 70%, rgba(0, 191, 255, 0.05), transparent 70%);
 }
 
 .game-container {
@@ -322,6 +330,95 @@ button:hover {
             rgba(255, 255, 255, 0.05) 5px,
             rgba(255, 255, 255, 0.05) 10px
         );
+}
+
+.elevator.phasing {
+    background-color: var(--phase-color);
+    box-shadow: 
+        0 0 25px rgba(0, 191, 255, 0.9),
+        0 0 40px rgba(0, 191, 255, 0.3);
+    border: 1px solid rgba(0, 191, 255, 0.8);
+    background-image: 
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.1)),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 5px,
+            rgba(255, 255, 255, 0.2) 5px,
+            rgba(255, 255, 255, 0.2) 10px
+        );
+    opacity: 0.8;
+    animation: phaseEffect 0.3s infinite alternate ease-in-out;
+}
+
+@keyframes phaseEffect {
+    from { 
+        opacity: 0.7; 
+        transform: translate(-50%, -50%) scale(0.95);
+        box-shadow: 0 0 25px rgba(0, 191, 255, 0.7), 0 0 40px rgba(0, 191, 255, 0.3);
+    }
+    to { 
+        opacity: 0.9; 
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 0 35px rgba(0, 191, 255, 1), 0 0 60px rgba(0, 191, 255, 0.5);
+    }
+}
+
+/* Add a trail effect for phasing */
+.elevator.phasing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    background: linear-gradient(to top, var(--phase-color), transparent);
+    opacity: 0.5;
+    z-index: -1;
+    pointer-events: none;
+    transform: translateY(40%);
+    animation: phaseTrail 0.2s infinite linear;
+}
+
+@keyframes phaseTrail {
+    from { transform: translateY(40%); }
+    to { transform: translateY(45%); }
+}
+
+/* Add a visual effect for when the elevator is normalizing speed after phasing */
+.elevator.normalizing-speed {
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    animation: normalizingPulse 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes normalizingPulse {
+    from { 
+        box-shadow: 0 0 15px rgba(0, 200, 255, 0.6), 0 0 25px rgba(0, 200, 255, 0.2);
+        border-color: rgba(0, 200, 255, 0.6);
+    }
+    to { 
+        box-shadow: 0 0 10px rgba(0, 200, 255, 0.4), 0 0 20px rgba(0, 200, 255, 0.1);
+        border-color: rgba(0, 200, 255, 0.4);
+    }
+}
+
+/* Phase effect for the shaft */
+.elevator-shaft.phasing {
+    background-color: rgba(0, 30, 60, 0.4);
+    border-left: 2px dashed rgba(0, 191, 255, 0.3);
+    border-right: 2px dashed rgba(0, 191, 255, 0.3);
+    background-image: 
+        linear-gradient(to bottom, 
+            rgba(0, 30, 60, 0) 0%, 
+            rgba(0, 30, 60, 0.4) 80%, 
+            rgba(0, 30, 60, 0.7) 100%),
+        radial-gradient(
+            circle at 50% 100%, 
+            rgba(0, 191, 255, 0.2), 
+            transparent 70%
+        );
+    /* Add motion blur effect */
+    backdrop-filter: blur(1px);
 }
 
 .obstacle {
@@ -612,6 +709,7 @@ button:hover {
     opacity: 0.8;
     text-transform: uppercase;
     letter-spacing: 1px;
+    color: var(--phase-color);
 }
 
 .brake-power-bar-background {

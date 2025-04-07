@@ -9,58 +9,58 @@ function updateDepthDisplay(currentDepth) {
     }
 }
 
-// Update the brake power display
-function updateBrakePowerDisplay(brakePower, maxBrakePower, descentSpeed, brakePowerRegenSpeedThreshold) {
-    const brakePowerBar = document.getElementById('brakePowerBar');
-    if (brakePowerBar) {
-        const powerPercentage = (brakePower / maxBrakePower) * 100;
-        brakePowerBar.style.width = `${powerPercentage}%`;
+// Update the phase power display (renamed from brake power)
+function updateBrakePowerDisplay(phasePower, maxPhasePower, descentSpeed, phasePowerRegenSpeedThreshold) {
+    const phasePowerBar = document.getElementById('brakePowerBar');
+    if (phasePowerBar) {
+        const powerPercentage = (phasePower / maxPhasePower) * 100;
+        phasePowerBar.style.width = `${powerPercentage}%`;
         
         if (powerPercentage < 25) {
-            brakePowerBar.style.backgroundColor = 'var(--danger-color)';
+            phasePowerBar.style.backgroundColor = 'var(--danger-color)';
         } else if (powerPercentage < 50) {
-            brakePowerBar.style.backgroundColor = 'var(--brake-color)';
+            phasePowerBar.style.backgroundColor = '#8a2be2'; // Purple for phase power
         } else {
-            brakePowerBar.style.backgroundColor = 'var(--success-color)';
+            phasePowerBar.style.backgroundColor = '#00bfff'; // Blue for phase power
         }
         
         if (descentSpeed > 20) {
             const flashRate = Math.min(1, (descentSpeed - 20) / 20);
-            brakePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
+            phasePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
             
             const pulseSize = Math.min(5, (descentSpeed - 20) / 8);
-            brakePowerBar.style.boxShadow = `0 0 ${pulseSize}px 2px rgba(255, 60, 90, 0.7)`;
+            phasePowerBar.style.boxShadow = `0 0 ${pulseSize}px 2px rgba(0, 191, 255, 0.7)`;
         } else {
-            brakePowerBar.style.opacity = 1;
-            brakePowerBar.style.boxShadow = '';
+            phasePowerBar.style.opacity = 1;
+            phasePowerBar.style.boxShadow = '';
         }
         
-        if (descentSpeed < brakePowerRegenSpeedThreshold && brakePower < maxBrakePower) {
-            brakePowerBar.style.opacity = 0.5;
-            brakePowerBar.style.background = `repeating-linear-gradient(
+        if (descentSpeed < phasePowerRegenSpeedThreshold && phasePower < maxPhasePower) {
+            phasePowerBar.style.opacity = 0.5;
+            phasePowerBar.style.background = `repeating-linear-gradient(
                 45deg,
-                ${brakePowerBar.style.backgroundColor},
-                ${brakePowerBar.style.backgroundColor} 10px,
+                ${phasePowerBar.style.backgroundColor},
+                ${phasePowerBar.style.backgroundColor} 10px,
                 rgba(0, 0, 0, 0.2) 10px,
                 rgba(0, 0, 0, 0.2) 20px
             )`;
         } else if (descentSpeed <= 20) {
-            brakePowerBar.style.background = '';
+            phasePowerBar.style.background = '';
         }
     }
 }
 
-// Update visuals for braking state
-function updateBrakingVisuals(isBraking, canBrake) {
+// Update visuals for phasing state (renamed from braking)
+function updateBrakingVisuals(isPhasing, canPhase) {
     const body = document.body;
     const elevatorShaft = document.querySelector('.elevator-shaft');
     
-    if (isBraking && canBrake) {
-        elevatorShaft.classList.add('braking');
-        body.classList.add('braking');
+    if (isPhasing && canPhase) {
+        elevatorShaft.classList.add('phasing');
+        body.classList.add('phasing');
     } else {
-        elevatorShaft.classList.remove('braking');
-        body.classList.remove('braking');
+        elevatorShaft.classList.remove('phasing');
+        body.classList.remove('phasing');
     }
 }
 

@@ -1,4 +1,4 @@
-// Input handling for player movement and braking
+// Input handling for player movement and phasing
 let mouseIsInGameArea = true;
 let lastKnownMouseX = window.innerWidth / 2;
 let elevatorX = 50;
@@ -59,16 +59,32 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
     window.addEventListener('mousemove', (e) => {
         if (gameState.gameActive) {
             lastKnownMouseX = e.clientX;
-            if (!mouseIsInGameArea && gameState.isBraking) {
+            if (!mouseIsInGameArea && gameState.isPhasing) {
                 gameState.elevatorX = setPosition(e.clientX, elevatorShaft, elevator);
             }
         }
     });
 
-    // Touch start for braking
+    // Touch start for phasing
     window.addEventListener('touchstart', (e) => {
-        if (gameState.gameActive && gameState.canBrake) {
-            gameState.isBraking = true;
+        if (gameState.gameActive && gameState.canPhase) {
+            gameState.isPhasing = true;
+            
+            // Save normal speed before activating the boost
+            gameState.normalSpeed = gameState.descentSpeed;
+            
+            // Add phase boost effect
+            if (gameState.phaseBoostActive !== undefined) {
+                gameState.phaseBoostActive = true;
+                gameState.phaseBoostDuration = gameState.maxPhaseBoostDuration || 10;
+            }
+            
+            // Add phase effect to elevator
+            if (elevator) {
+                elevator.classList.add('phasing');
+                elevator.classList.remove('normalizing-speed');
+            }
+            
             if (e.touches.length > 0) {
                 lastKnownMouseX = e.touches[0].clientX;
             }
@@ -76,9 +92,14 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
         }
     }, { passive: false });
 
-    // Touch end to release brake
+    // Touch end to release phase
     window.addEventListener('touchend', () => {
-        gameState.isBraking = false;
+        gameState.isPhasing = false;
+        
+        // Remove phase effect from elevator
+        if (elevator) {
+            elevator.classList.remove('phasing');
+        }
     });
 
     // Touch move for elevator control

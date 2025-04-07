@@ -19,20 +19,25 @@ const gameState = {
     playerName: '',
     currentDepth: 0,
     descentSpeed: 0,
+    normalSpeed: 0,  // Track normal speed before phase boost
     minSpeed: 2,
     maxSpeed: 60,
     baseAcceleration: 0.03,
-    isBraking: false,
+    isPhasing: false,
+    phaseBoostActive: false,
+    phaseBoostDuration: 0,
+    maxPhaseBoostDuration: 10,
+    speedNormalizationRate: 0.08, // Increased from 0.05 for more noticeable deceleration
     obstacleInterval: null,
     difficultyTimer: null,
     gameActive: false,
     debugMode: false,
-    maxBrakePower: 100,
-    brakePower: 100,
-    brakePowerConsumptionRate: 1.4,
-    brakePowerRegenRate: 0.2,
-    brakePowerRegenSpeedThreshold: 8,
-    canBrake: true,
+    maxPhasePower: 100,
+    phasePower: 100,
+    phasePowerConsumptionRate: 2.2,
+    phasePowerRegenRate: 0.15,
+    phasePowerRegenSpeedThreshold: 6,
+    canPhase: true,
     shaftWidth: 0,
     shaftHeight: 0,
     elevatorX: 50,
@@ -47,12 +52,13 @@ const gameState = {
     // New Leviathan properties
     leviathanDistance: 100, // Distance from player (0-100, 0 means caught)
     maxLeviathanDistance: 100,
-    leviathanSpeed: 0.03, // Reduced further to make it easier initially
-    collisionSlowdownFactor: 2.5, // Reduced to make collisions less punishing
+    leviathanSpeed: 0.025, // Reduced from 0.03 to make it easier to escape
+    collisionSlowdownFactor: 2.0, // Reduced to make collisions less punishing
     recentlyCollided: false,
     collisionCooldown: 0,
     maxCollisionCooldown: 60, // frames
-    leviathanElement: null
+    leviathanElement: null,
+    phaseSound: null
 };
 
 // Initialize the game
@@ -72,6 +78,15 @@ function initGame() {
     // Store leviathan element
     gameState.leviathanElement = leviathan;
     
+    // Initialize phase sound
+    try {
+        gameState.phaseSound = new Audio();
+        gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yboq//8BAAEAKysDA/n5dXUICAYGxsb////19ZaWtLT9/aGhPDwPD93d9vZQUAcHvr78/ImJBQXW1uno0tKYmA4ONzfl5fv7HR0aGgEBy8sAAAYGDg4FBQAAxMQEBAQEzs4ICPDw//8gIJCQOzs2Nqurjo5JSeru19disKioFBQDA8vL8PBnZ8zMsrLJyQ8PERH5+Q8PIiIzMwQEsrJ7e/b2pKQbGwIC4eH9/QYGBAT6+ufnqqoXF8XFlZX29vr6AgL9/QgIFBQJCSEhCQn5+QcHHh4UFAMDCQkPDw8PAQH9/QEBBAQBAf//AwMDAwEBAwMDAwEBAwMDAwEBAwMDAw8P/v4cHAsL8fHv76am7OzW1vf3JSUTEA0N+fkAAPf3+/vW1qqq/v45OUJCx8f397m5dXUGBvz8Fxfr6+Tk/f3w8BcXFRUWFh4eCQkNDQUFw8PMzCYmAgL//wQE+/v//wIC/f0AAP//AQEBAQAAAAD//wAA//8BAQEBAAAAAPv7/f319enp7e3s7AEBAgL//wAA//8BAQEBAQAAAP//AAD//wAA//8DAQQE/f0AAAAABAT9/f//AgIEBP39//8CAgQE/f3//wICAQEAAAAA//8AAAAA//8AAP//AwP+/v//AgIDA/7+//8CAgMD/v7//wICAwP+/v//AgIDAwEBAAAAAAAA//8AAP//AwMBAQAA//8AAAEBAgL//wAA//8BAQIC//8AAP//AQEBAQAAAAAAAAAAAAD//wAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wICAAD//wAA//8CAv//AAAAAP//AAD//wICAAD//wAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wIC//8AAAAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wICAAD//wAA//8BAf//AAD//wEB//8AAAAAAAABAQAAAAAAAAEBAAAAAAAAAQEAAAAAAAABAAAAAAAAAAAA//8AAP//AQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAAAAAAAD//wAA//8AAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+        gameState.phaseSound.volume = 0.5;
+    } catch (e) {
+        console.error("Could not initialize phase sound", e);
+    }
+    
     // Setup event listeners for UI controls
     startButton.addEventListener('click', () => {
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
@@ -85,15 +100,45 @@ function initGame() {
     // Setup input handlers
     setupInputHandlers(gameState, elevatorShaft, elevator);
     
-    // Set up mouse and touch events for braking
+    // Set up mouse and touch events for phasing instead of braking
     window.addEventListener('mousedown', () => {
-        if (gameState.gameActive && gameState.canBrake) {
-            gameState.isBraking = true;
+        if (gameState.gameActive && gameState.canPhase) {
+            gameState.isPhasing = true;
+            
+            // Save normal speed before activating the boost
+            gameState.normalSpeed = gameState.descentSpeed;
+            
+            // Add phase surge effect when first activated
+            gameState.phaseBoostActive = true;
+            gameState.phaseBoostDuration = gameState.maxPhaseBoostDuration;
+            
+            // Play phase sound
+            if (gameState.phaseSound) {
+                try {
+                    gameState.phaseSound.currentTime = 0;
+                    gameState.phaseSound.play().catch(e => console.log("Could not play phase sound", e));
+                } catch (e) {
+                    console.log("Error playing sound", e);
+                }
+            }
+            
+            // Add phase effect to elevator
+            const elevator = document.getElementById('elevator');
+            if (elevator) {
+                elevator.classList.add('phasing');
+                elevator.classList.remove('normalizing-speed');
+            }
         }
     });
     
     window.addEventListener('mouseup', () => {
-        gameState.isBraking = false;
+        gameState.isPhasing = false;
+        
+        // Remove phase effect from elevator
+        const elevator = document.getElementById('elevator');
+        if (elevator) {
+            elevator.classList.remove('phasing');
+        }
     });
     
     // Load initial leaderboard
@@ -156,7 +201,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.currentDepth = 0;
     gameState.descentSpeed = 5;
     gameState.gameActive = true;
-    gameState.isBraking = false;
+    gameState.isPhasing = false;
     
     gameState.obstacles.forEach(obstacle => obstacle.remove());
     gameState.particles.forEach(particle => particle.remove());
@@ -168,8 +213,8 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.lastObstacleTime = 0;
     gameState.minObstacleSpacing = 3000;
     
-    gameState.brakePower = gameState.maxBrakePower;
-    gameState.canBrake = true;
+    gameState.phasePower = gameState.maxPhasePower;
+    gameState.canPhase = true;
     
     // Reset leviathan state
     gameState.leviathanDistance = gameState.maxLeviathanDistance;
@@ -177,11 +222,11 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.collisionCooldown = 0;
     
     updateDepthDisplay(gameState.currentDepth);
-    updateBrakePowerDisplay(
-        gameState.brakePower, 
-        gameState.maxBrakePower, 
+    updatePhasePowerDisplay(
+        gameState.phasePower, 
+        gameState.maxPhasePower, 
         gameState.descentSpeed, 
-        gameState.brakePowerRegenSpeedThreshold
+        gameState.phasePowerRegenSpeedThreshold
     );
     updateLeviathanDistanceDisplay();
     
@@ -246,37 +291,97 @@ function setupGameLoop() {
             const depthFactor = Math.min(1 + (gameState.currentDepth / 300), 4);
             const currentAcceleration = gameState.baseAcceleration * depthFactor;
             
-            // Handle braking
-            if (gameState.isBraking && gameState.canBrake) {
-                gameState.brakePower -= gameState.brakePowerConsumptionRate;
+            // Handle phasing (formerly braking)
+            if (gameState.isPhasing && gameState.canPhase) {
+                gameState.phasePower -= gameState.phasePowerConsumptionRate;
                 
-                if (gameState.brakePower <= 0) {
-                    gameState.brakePower = 0;
-                    gameState.canBrake = false;
+                if (gameState.phasePower <= 0) {
+                    gameState.phasePower = 0;
+                    gameState.canPhase = false;
+                    
+                    // Ensure phasing is turned off when power depleted
+                    gameState.isPhasing = false;
+                    gameState.phaseBoostActive = false;
+                    const elevator = document.getElementById('elevator');
+                    if (elevator) {
+                        elevator.classList.remove('phasing');
+                    }
                 }
                 
-                const brakeEffectiveness = Math.min(0.03, 0.015 + (gameState.descentSpeed / 400));
-                gameState.descentSpeed = Math.max(gameState.minSpeed, gameState.descentSpeed * (1 - brakeEffectiveness));
+                // Save normal speed when we first activate phasing
+                if (gameState.phaseBoostActive && gameState.phaseBoostDuration === gameState.maxPhaseBoostDuration) {
+                    gameState.normalSpeed = gameState.descentSpeed;
+                }
+                
+                // Instead of a small boost, give a significant speed surge when phasing
+                if (gameState.phaseBoostActive) {
+                    // Initial activation gives a big boost (30% increase)
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.3);
+                    
+                    gameState.phaseBoostDuration--;
+                    if (gameState.phaseBoostDuration <= 0) {
+                        gameState.phaseBoostActive = false;
+                    }
+                } else {
+                    // Sustained phasing still gives a good boost (5% per frame)
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.05);
+                }
             } else {
-                // Handle brake power regeneration
-                if (gameState.brakePower < gameState.maxBrakePower) {
-                    if (gameState.descentSpeed >= gameState.brakePowerRegenSpeedThreshold) {
-                        const speedFactor = Math.max(0.3, 1 - (gameState.descentSpeed / 50));
-                        const adjustedRegenRate = gameState.brakePowerRegenRate * speedFactor;
+                // Phase boost deactivates when phasing stops
+                gameState.phaseBoostActive = false;
+                
+                // Normalize speed back to pre-phase level gradually when not phasing
+                if (gameState.normalSpeed > 0 && Math.abs(gameState.descentSpeed - gameState.normalSpeed) > 1) {
+                    if (gameState.descentSpeed > gameState.normalSpeed) {
+                        // Gradually reduce speed back to normal
+                        const reductionAmount = Math.max(
+                            0.5, 
+                            (gameState.descentSpeed - gameState.normalSpeed) * gameState.speedNormalizationRate
+                        );
+                        gameState.descentSpeed = Math.max(
+                            gameState.normalSpeed,
+                            gameState.descentSpeed - reductionAmount
+                        );
                         
-                        gameState.brakePower += adjustedRegenRate;
-                        if (gameState.brakePower >= gameState.maxBrakePower) {
-                            gameState.brakePower = gameState.maxBrakePower;
+                        // Add visual effect to show speed normalization
+                        const elevator = document.getElementById('elevator');
+                        if (elevator) {
+                            elevator.classList.add('normalizing-speed');
+                        }
+                    }
+                } else {
+                    // Reset normal speed tracking once we've returned to normal
+                    gameState.normalSpeed = 0;
+                    
+                    // Remove the normalizing effect
+                    const elevator = document.getElementById('elevator');
+                    if (elevator) {
+                        elevator.classList.remove('normalizing-speed');
+                    }
+                }
+                
+                // Handle phase power regeneration
+                if (gameState.phasePower < gameState.maxPhasePower) {
+                    if (gameState.descentSpeed >= gameState.phasePowerRegenSpeedThreshold) {
+                        const speedFactor = Math.max(0.3, 1 - (gameState.descentSpeed / 50));
+                        const adjustedRegenRate = gameState.phasePowerRegenRate * speedFactor;
+                        
+                        gameState.phasePower += adjustedRegenRate;
+                        if (gameState.phasePower >= gameState.maxPhasePower) {
+                            gameState.phasePower = gameState.maxPhasePower;
                         }
                     }
                     
-                    if (!gameState.canBrake && gameState.brakePower >= gameState.maxBrakePower * 0.2) {
-                        gameState.canBrake = true;
+                    // Only allow phasing again once we reach 30% power
+                    if (!gameState.canPhase && gameState.phasePower >= gameState.maxPhasePower * 0.3) {
+                        gameState.canPhase = true;
                     }
                 }
                 
-                // Increase speed
-                gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed + currentAcceleration);
+                // Increase speed (if we're not normalizing from phase boost)
+                if (gameState.normalSpeed === 0) {
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed + currentAcceleration);
+                }
                 
                 // Auto-brake at extreme speeds
                 if (gameState.descentSpeed > 30) {
@@ -287,13 +392,13 @@ function setupGameLoop() {
             
             // Update visual elements only every 3 frames for better performance
             if (frameCount % 3 === 0) {
-                updateBrakePowerDisplay(
-                    gameState.brakePower, 
-                    gameState.maxBrakePower, 
+                updatePhasePowerDisplay(
+                    gameState.phasePower, 
+                    gameState.maxPhasePower, 
                     gameState.descentSpeed, 
-                    gameState.brakePowerRegenSpeedThreshold
+                    gameState.phasePowerRegenSpeedThreshold
                 );
-                updateBrakingVisuals(gameState.isBraking, gameState.canBrake);
+                updatePhasingVisuals(gameState.isPhasing, gameState.canPhase);
                 updateLeviathanDistanceDisplay();
             }
             
@@ -338,23 +443,23 @@ function updateLeviathan(frameCount) {
     let baseApproachRate = gameState.leviathanSpeed;
     
     // Leviathan gets faster as depth increases
-    const depthFactor = Math.min(1 + (gameState.currentDepth / 500), 2.5); // Reduced max factor
+    const depthFactor = Math.min(1 + (gameState.currentDepth / 800), 2.0); // Reduced from 500 to 800, max factor from 2.5 to 2.0
     baseApproachRate *= depthFactor;
     
     // Leviathan catches up faster when player is slow
-    const speedFactor = Math.max(0.5, Math.min(2.5, gameState.descentSpeed / 15));
+    const speedFactor = Math.max(0.5, Math.min(2.8, gameState.descentSpeed / 12)); // Increased max factor and lowered division
     const approachRate = baseApproachRate / speedFactor;
     
     // Track if player is escaping 
     let isEscaping = false;
     
     // When player is going fast, they can create some distance
-    if (gameState.descentSpeed > 20 && !gameState.recentlyCollided) { // Lowered threshold from 25 to 20
+    if (gameState.descentSpeed > 16 && !gameState.recentlyCollided) { // Lowered threshold from 20 to 16
         // Player can increase distance by going fast
         const previousDistance = gameState.leviathanDistance;
         gameState.leviathanDistance = Math.min(
             gameState.maxLeviathanDistance, 
-            gameState.leviathanDistance + (gameState.descentSpeed - 20) * 0.03 // Increased from 0.01 to 0.03
+            gameState.leviathanDistance + (gameState.descentSpeed - 16) * 0.05 // Increased from 0.03 to 0.05
         );
         
         // Check if we're actually gaining distance
@@ -400,7 +505,7 @@ function updateLeviathan(frameCount) {
     
     // If there was a recent collision, leviathan gains ground faster
     if (gameState.recentlyCollided) {
-        gameState.leviathanDistance -= baseApproachRate * 1.2; // Reduced from 1.5x to 1.2x
+        gameState.leviathanDistance -= baseApproachRate * 1.0; // Reduced from 1.2x to 1.0x
     }
     
     // Check if leviathan caught the player
@@ -409,7 +514,9 @@ function updateLeviathan(frameCount) {
         
         // Set final position for leviathan
         if (gameState.leviathanElement) {
-            gameState.leviathanElement.style.top = '15%'; // Fixed position when catching player
+            // Fix the position to ensure it stays above the player
+            gameState.leviathanElement.style.top = '10%'; // Changed from 15% to 10%
+            gameState.leviathanElement.style.bottom = 'auto'; // Ensure bottom is not set
         }
         
         endGame();
@@ -420,12 +527,12 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         // Convert normalized distance to visual position
-        // When distance is 0, top should be 15% (caught)
+        // When distance is 0, top should be 10% (caught) - changed from 15%
         // When distance is 100, top should be -20% (far away)
-        const topPosition = 15 - (normalizedDistance * 35);
+        const topPosition = 10 - (normalizedDistance * 30); // Changed from 15/35 to 10/30
         
-        // Position from the top instead of bottom
-        gameState.leviathanElement.style.bottom = '';
+        // Position from the top instead of bottom, and ensure bottom is not set
+        gameState.leviathanElement.style.bottom = 'auto';
         gameState.leviathanElement.style.top = `${topPosition}%`;
         
         // Add visual indicators when leviathan is close (only if not escaping)
@@ -653,7 +760,7 @@ function setupDifficultyProgression() {
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
         // Increase leviathan speed as difficulty increases, but very slowly
-        gameState.leviathanSpeed += 0.003; // Reduced from 0.005
+        gameState.leviathanSpeed += 0.002; // Reduced from 0.003
         
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
@@ -665,10 +772,10 @@ function setupDifficultyProgression() {
     }, 18000);
 }
 
-// Collision detection - modified to slow down player instead of ending the game
+// Collision detection - modified to ignore obstacles when phasing
 function checkCollisions() {
-    // Skip collision check if player already recently collided
-    if (gameState.recentlyCollided) {
+    // Skip collision check if player already recently collided or is phasing
+    if (gameState.recentlyCollided || gameState.isPhasing) {
         return;
     }
     
@@ -720,12 +827,67 @@ function checkCollisions() {
         gameState.collisionCooldown = gameState.maxCollisionCooldown;
         
         // Decrease leviathan distance (leviathan gets closer)
-        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 5); // Reduced from 10 to 5
+        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 3); // Reduced from 5 to 3
         
         // If leviathan catches player, end the game
         if (gameState.leviathanDistance <= 0) {
             endGame();
         }
+    }
+}
+
+// Update the phase power display (formerly brake power)
+function updatePhasePowerDisplay(phasePower, maxPhasePower, descentSpeed, phasePowerRegenSpeedThreshold) {
+    const phasePowerBar = document.getElementById('brakePowerBar');
+    if (phasePowerBar) {
+        const powerPercentage = (phasePower / maxPhasePower) * 100;
+        phasePowerBar.style.width = `${powerPercentage}%`;
+        
+        if (powerPercentage < 25) {
+            phasePowerBar.style.backgroundColor = 'var(--danger-color)';
+        } else if (powerPercentage < 50) {
+            phasePowerBar.style.backgroundColor = '#8a2be2'; // Purple for phase power
+        } else {
+            phasePowerBar.style.backgroundColor = '#00bfff'; // Blue for phase power
+        }
+        
+        if (descentSpeed > 20) {
+            const flashRate = Math.min(1, (descentSpeed - 20) / 20);
+            phasePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
+            
+            const pulseSize = Math.min(5, (descentSpeed - 20) / 8);
+            phasePowerBar.style.boxShadow = `0 0 ${pulseSize}px 2px rgba(0, 191, 255, 0.7)`;
+        } else {
+            phasePowerBar.style.opacity = 1;
+            phasePowerBar.style.boxShadow = '';
+        }
+        
+        if (descentSpeed < phasePowerRegenSpeedThreshold && phasePower < maxPhasePower) {
+            phasePowerBar.style.opacity = 0.5;
+            phasePowerBar.style.background = `repeating-linear-gradient(
+                45deg,
+                ${phasePowerBar.style.backgroundColor},
+                ${phasePowerBar.style.backgroundColor} 10px,
+                rgba(0, 0, 0, 0.2) 10px,
+                rgba(0, 0, 0, 0.2) 20px
+            )`;
+        } else if (descentSpeed <= 20) {
+            phasePowerBar.style.background = '';
+        }
+    }
+}
+
+// Update visuals for phasing state (formerly braking)
+function updatePhasingVisuals(isPhasing, canPhase) {
+    const body = document.body;
+    const elevatorShaft = document.querySelector('.elevator-shaft');
+    
+    if (isPhasing && canPhase) {
+        elevatorShaft.classList.add('phasing');
+        body.classList.add('phasing');
+    } else {
+        elevatorShaft.classList.remove('phasing');
+        body.classList.remove('phasing');
     }
 }
 
