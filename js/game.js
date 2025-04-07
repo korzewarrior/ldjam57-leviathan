@@ -932,7 +932,7 @@ function createBubble(elevator) {
     
     
     const bubbleX = (elevatorRect.left + elevatorRect.right) / 2 - shaftRect.left;
-    const bubbleY = elevatorRect.top + 10 - shaftRect.top;
+    const bubbleY = elevatorRect.bottom - 10 - shaftRect.top;
     
     bubble.style.left = `${bubbleX}px`;
     bubble.style.top = `${bubbleY}px`;
@@ -956,31 +956,31 @@ function updateSubmarineOrientation() {
     const elevator = document.getElementById('elevator');
     if (!elevator) return;
     
-    
+    // Calculate the movement direction based on the difference in position
     const xDiff = gameState.elevatorX - gameState.lastElevatorX;
     
+    // Invert the rotation calculation to fix the backwards aiming
+    const targetRotation = -xDiff * gameState.maxRotation;
     
-    const targetRotation = xDiff * gameState.maxRotation;
-    
-    
+    // Smooth transition to the target rotation
     gameState.elevatorRotation += (targetRotation - gameState.elevatorRotation) * gameState.rotationSpeed;
     
-    
+    // Gradually reduce rotation when not moving horizontally
     if (Math.abs(xDiff) < 0.01 && Math.abs(gameState.elevatorRotation) > 0.1) {
         gameState.elevatorRotation *= 0.9; 
     }
     
+    // Apply the rotation transform
+    elevator.style.transform = `translate(-50%, -50%) rotate(${gameState.elevatorRotation}deg)`;
     
-    elevator.style.transform = `translate(-50%, 50%) rotate(${gameState.elevatorRotation}deg)`;
-    
-    
+    // Store the current rotation for CSS animations
     elevator.style.setProperty('--current-rotation', `${gameState.elevatorRotation}deg`);
     
-    
+    // Add 'moving' class and ensure propulsion trail exists when moving
     if (Math.abs(xDiff) > 0.05) {
         elevator.classList.add('moving');
         
-        
+        // Ensure propulsion trail exists
         if (!elevator.querySelector('.propulsion-trail')) {
             const trail = document.createElement('div');
             trail.className = 'propulsion-trail';
@@ -990,7 +990,7 @@ function updateSubmarineOrientation() {
         elevator.classList.remove('moving');
     }
     
-    
+    // Update the last position
     gameState.lastElevatorX = gameState.elevatorX;
 }
 export { 
