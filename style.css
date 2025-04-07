@@ -778,6 +778,17 @@ button:hover {
     animation: fadeIn 0.5s ease-out;
 }
 
+.version-display {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Roboto Mono', monospace;
+}
+
 .results-screen {
     animation: fadeIn 0.5s ease-out;
 }

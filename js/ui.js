@@ -1,4 +1,6 @@
 import { checkHighScore, displayLeaderboard } from './leaderboard.js';
+import { VERSION } from '../version.js';
+
 function updateDepthDisplay(currentDepth) {
     const currentDepthDisplay = document.getElementById('currentDepth');
     if (currentDepthDisplay) {
@@ -64,6 +66,12 @@ function showWelcomeScreen() {
     welcomeScreen.classList.remove('hidden');
     gameScreen.classList.add('hidden');
     resultsScreen.classList.add('hidden');
+    
+    // Update version display
+    const versionElement = document.getElementById('versionNumber');
+    if (versionElement) {
+        versionElement.textContent = VERSION;
+    }
 }
 function showGameScreen() {
     const welcomeScreen = document.getElementById('welcomeScreen');
