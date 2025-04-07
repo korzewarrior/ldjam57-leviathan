@@ -2,6 +2,8 @@ import { db } from './firebase-config.js';
 
 let leaderboard = [];
 let localHighScore = 0;
+// Add a cache flag to track if we've already loaded the leaderboard
+let leaderboardLoaded = false;
 
 // Initialize the local high score from localStorage
 function initLocalHighScore() {
@@ -40,6 +42,12 @@ function updateLocalHighScore(playerName, depth) {
 }
 
 async function loadLeaderboard() {
+    // If we've already loaded the leaderboard, don't fetch it again
+    if (leaderboardLoaded) {
+        console.log('Using cached leaderboard data');
+        return Promise.resolve(leaderboard);
+    }
+    
     try {
         const leaderboardRef = db.collection('leaderboard');
         const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(100).get();
@@ -49,6 +57,8 @@ async function loadLeaderboard() {
             leaderboard.push(doc.data());
         });
         
+        // Set the flag to indicate we've loaded the data
+        leaderboardLoaded = true;
         console.log('Leaderboard loaded from Firebase');
     } catch (e) {
         console.error('Failed to load leaderboard from Firebase:', e);
@@ -60,8 +70,10 @@ async function displayLeaderboard() {
     const leaderboardList = document.getElementById('leaderboardList');
     leaderboardList.innerHTML = '';
     
-    // Make sure we have the latest data
-    await loadLeaderboard();
+    // Load leaderboard data if not already loaded
+    if (!leaderboardLoaded) {
+        await loadLeaderboard();
+    }
     
     const topEntries = leaderboard.slice(0, 100);
     
@@ -114,7 +126,8 @@ async function checkHighScore(playerName, depth) {
         // Add the new score to Firebase
         await db.collection('leaderboard').add(newScore);
         
-        // Refresh our local copy of the leaderboard
+        // Force reload the leaderboard to include the new score
+        leaderboardLoaded = false;
         await loadLeaderboard();
         
         // Find the player's rank
