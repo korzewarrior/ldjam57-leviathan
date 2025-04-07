@@ -7,7 +7,7 @@ import {
     showResultsScreen,
     updateDebugVisuals
 } from './ui.js';
-import { loadLeaderboard, displayLeaderboard } from './leaderboard.js';
+import { loadLeaderboard, displayLeaderboard, initLocalHighScore, updatePersonalBestDisplay } from './leaderboard.js';
 import { setupInputHandlers } from './input.js';
 let mouseIsDown = false;
 const gameState = {
@@ -74,6 +74,10 @@ function initGame() {
     
     
     gameState.leviathanElement = leviathan;
+    
+    // Initialize and display the player's personal best score
+    initLocalHighScore();
+    updatePersonalBestDisplay();
     
     
     try {
@@ -302,6 +306,10 @@ function endGame() {
     gameState.obstacles = [];
     gameState.particles = [];
     
+    // Update local high score before showing results
+    import('./leaderboard.js').then(module => {
+        module.updateLocalHighScore(gameState.playerName, gameState.currentDepth);
+    });
     
     if (gameState.leviathanElement) {
         gameState.leviathanElement.classList.add('hidden');
@@ -523,6 +531,7 @@ function updateLeviathan(frameCount) {
     
     const elevatorShaft = document.querySelector('.elevator-shaft');
     const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
+    const leviathanContainer = document.querySelector('.leviathan-distance-container.fullwidth');
     
     if (isEscaping) {
         
@@ -538,6 +547,11 @@ function updateLeviathan(frameCount) {
         if (leviathanDistanceBar) {
             leviathanDistanceBar.classList.add('escaping');
         }
+        
+        if (leviathanContainer) {
+            leviathanContainer.classList.add('escaping');
+            leviathanContainer.classList.remove('approaching', 'close');
+        }
     } else {
         
         if (gameState.leviathanElement) {
@@ -550,6 +564,10 @@ function updateLeviathan(frameCount) {
         
         if (leviathanDistanceBar) {
             leviathanDistanceBar.classList.remove('escaping');
+        }
+        
+        if (leviathanContainer) {
+            leviathanContainer.classList.remove('escaping');
         }
     }
     
@@ -602,20 +620,38 @@ function updateLeviathan(frameCount) {
 }
 function updateLeviathanDistanceDisplay() {
     const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
+    const leviathanContainer = document.querySelector('.leviathan-distance-container.fullwidth');
+    
     if (leviathanDistanceBar) {
         const distancePercentage = (gameState.leviathanDistance / gameState.maxLeviathanDistance) * 100;
         leviathanDistanceBar.style.width = `${distancePercentage}%`;
         
-        
         if (distancePercentage < 25) {
+            // Danger - close
             leviathanDistanceBar.style.backgroundColor = 'var(--danger-color)';
             leviathanDistanceBar.style.boxShadow = '0 0 10px rgba(255, 60, 90, 0.7)';
+            
+            if (leviathanContainer) {
+                leviathanContainer.classList.add('close');
+                leviathanContainer.classList.remove('approaching');
+            }
         } else if (distancePercentage < 50) {
+            // Warning - approaching
             leviathanDistanceBar.style.backgroundColor = 'var(--brake-color)';
             leviathanDistanceBar.style.boxShadow = '0 0 8px rgba(255, 102, 0, 0.6)';
+            
+            if (leviathanContainer) {
+                leviathanContainer.classList.add('approaching');
+                leviathanContainer.classList.remove('close');
+            }
         } else {
+            // Normal - safe distance
             leviathanDistanceBar.style.backgroundColor = 'var(--leviathan-color)';
             leviathanDistanceBar.style.boxShadow = '0 0 8px rgba(114, 9, 183, 0.5)';
+            
+            if (leviathanContainer) {
+                leviathanContainer.classList.remove('approaching', 'close');
+            }
         }
     }
 }

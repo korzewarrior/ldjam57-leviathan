@@ -251,6 +251,33 @@ button:hover {
     transition: color 0.2s;
 }
 
+.personal-best-display {
+    display: flex;
+    align-items: baseline;
+    font-size: 1rem;
+    color: var(--success-color);
+    margin: 0 10px;
+    padding: 3px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: 1px solid var(--success-color);
+    text-shadow: 0 0 5px rgba(64, 255, 188, 0.7);
+}
+
+.personal-best-display span:first-child {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.personal-best-display span:last-child {
+    font-size: 0.8rem;
+    margin-left: 2px;
+}
+
+#personalBestValue {
+    font-weight: bold;
+}
+
 .player-info {
     display: flex;
     flex-direction: row;
@@ -571,10 +598,16 @@ button:hover {
     padding: 15px;
     max-height: 400px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    position: relative;
+    z-index: 5;
 }
 
 #leaderboardList {
     list-style: none;
+    position: relative;
+    touch-action: pan-y;
 }
 
 .leaderboard-entry {
@@ -725,7 +758,7 @@ button:hover {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
     position: relative;
     z-index: 5;
-    margin-bottom: 15px;
+    margin-bottom: 0;
 }
 
 .brake-power-container {
@@ -815,12 +848,35 @@ button:hover {
     color: var(--leviathan-color);
 }
 
+.leviathan-distance-container.fullwidth {
+    width: 100%;
+    padding: 2px 12px 8px;
+    background-color: rgba(10, 10, 18, 0.85);
+    border-bottom: 1px solid rgba(114, 9, 183, 0.4);
+    margin: 0 0 5px 0;
+    position: relative;
+    z-index: 10;
+}
+
+.leviathan-distance-container.fullwidth span {
+    font-size: 0.8rem;
+    text-align: center;
+    margin: 0 auto 4px;
+    text-shadow: 0 0 5px rgba(114, 9, 183, 0.7);
+}
+
 .leviathan-distance-bar-background {
     height: 8px;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
     overflow: hidden;
     border: 1px solid var(--leviathan-color);
+}
+
+.leviathan-distance-container.fullwidth .leviathan-distance-bar-background {
+    height: 10px;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(114, 9, 183, 0.3);
 }
 
 .leviathan-distance-bar {
@@ -1099,4 +1155,121 @@ button:hover {
         transform: translateY(-100px) translateX(var(--float-x, 10px)) scale(0.5);
         opacity: 0;
     }
+}
+
+.results-screen p {
+    margin-bottom: 5px;
+}
+
+.personal-best-message {
+    color: var(--success-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+    animation: pulseBest 1.5s infinite alternate;
+    text-shadow: 0 0 10px rgba(64, 255, 188, 0.7);
+}
+
+@keyframes pulseBest {
+    0% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+/* Mobile device detection */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+    .pc-only {
+        display: none;
+    }
+    
+    .mobile-only {
+        display: inline-block;
+    }
+    
+    /* Improve scrolling on mobile devices */
+    .leaderboard {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: scroll; /* Force scrolling on mobile */
+        touch-action: pan-y; /* Explicitly allow vertical scrolling */
+        max-height: 350px; /* Slightly smaller to fit better on mobile */
+    }
+    
+    /* Make leaderboard entries easier to tap/scroll on mobile */
+    .leaderboard-entry {
+        padding: 10px 12px; /* Larger touch target */
+        min-height: 30px;
+    }
+    
+    /* Ensure the click-to-restart hint is easily visible */
+    #clickToRestartHint {
+        margin-top: 25px !important;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+}
+
+/* Add styling for the fullwidth container when the leviathan is in different states */
+.leviathan-distance-container.fullwidth .leviathan-distance-bar.escaping {
+    box-shadow: 0 0 12px rgba(64, 255, 188, 0.8);
+}
+
+/* Styles for approaching/close states */
+.leviathan-distance-container.fullwidth.approaching {
+    border-bottom-color: var(--brake-color);
+}
+
+.leviathan-distance-container.fullwidth.approaching span {
+    color: var(--brake-color);
+    text-shadow: 0 0 5px rgba(255, 102, 0, 0.7);
+}
+
+.leviathan-distance-container.fullwidth.close {
+    border-bottom-color: var(--danger-color);
+    animation: leviathanPulse 0.5s infinite alternate;
+}
+
+.leviathan-distance-container.fullwidth.close span {
+    color: var(--danger-color);
+    text-shadow: 0 0 5px rgba(255, 60, 90, 0.7);
+    animation: leviathanTextPulse 0.5s infinite alternate;
+}
+
+@keyframes leviathanPulse {
+    0% {
+        background-color: rgba(10, 10, 18, 0.85);
+    }
+    100% {
+        background-color: rgba(40, 10, 18, 0.85);
+    }
+}
+
+@keyframes leviathanTextPulse {
+    0% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+/* Styles for escaping state */
+.leviathan-distance-container.fullwidth.escaping {
+    border-bottom-color: var(--success-color);
+}
+
+.leviathan-distance-container.fullwidth.escaping span {
+    color: var(--success-color);
+    text-shadow: 0 0 5px rgba(64, 255, 188, 0.7);
 } 
