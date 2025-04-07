@@ -1,7 +1,7 @@
 // LEVIATHAN | Escape
 // Version tracking file
 
-export const VERSION = '0406.2344';
+export const VERSION = '0407.1604';
 
 // Cache busting helper
 export function clearVersionCache() {
