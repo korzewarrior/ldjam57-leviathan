@@ -5,7 +5,7 @@ let leaderboard = [];
 async function loadLeaderboard() {
     try {
         const leaderboardRef = db.collection('leaderboard');
-        const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(50).get();
+        const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(100).get();
         
         leaderboard = [];
         snapshot.forEach(doc => {
@@ -26,7 +26,7 @@ async function displayLeaderboard() {
     // Make sure we have the latest data
     await loadLeaderboard();
     
-    const topEntries = leaderboard.slice(0, 10);
+    const topEntries = leaderboard.slice(0, 100);
     
     if (topEntries.length === 0) {
         const emptyMessage = document.createElement('div');
@@ -83,7 +83,7 @@ async function checkHighScore(playerName, depth) {
             Math.abs(entry.depth - newScore.depth) < 0.1 &&
             entry.date === newScore.date);
         
-        return playerRank < 10;
+        return playerRank < 100;
     } catch (e) {
         console.error('Failed to submit score to Firebase:', e);
         return false;
