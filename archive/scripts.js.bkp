@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Game elements
     const welcomeScreen = document.getElementById('welcomeScreen');
     const gameScreen = document.getElementById('gameScreen');
     const resultsScreen = document.getElementById('resultsScreen');
@@ -13,32 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const leaderboardList = document.getElementById('leaderboardList');
     const elevatorElement = document.getElementById('elevator');
     const elevatorShaft = document.querySelector('.elevator-shaft');
-    const gameContainer = document.querySelector('.game-container');
     const elevator = document.querySelector('.elevator');
-    const brakePowerDisplay = document.getElementById('brake-power');
-    const brakePowerFill = document.querySelector('.brake-power-fill');
     
-    // Prevent dragging behavior
     document.addEventListener('dragstart', e => e.preventDefault());
     document.addEventListener('drag', e => e.preventDefault());
     document.addEventListener('drop', e => e.preventDefault());
     document.addEventListener('dragover', e => e.preventDefault());
     
-    // Mouse/touch state tracking
     let mouseIsDown = false;
     let mouseIsInGameArea = true;
     let lastKnownMouseX = window.innerWidth / 2;
     
-    // Game variables
     let playerName = '';
     let currentDepth = 0;
     let descentSpeed = 0;
     let minSpeed = 2;
     let maxSpeed = 60;
     let baseAcceleration = 0.03;
-    let deceleration = 0.3;
     let isBraking = false;
-    let gameInterval;
     let obstacleInterval;
     let difficultyTimer;
     let gameActive = false;
@@ -57,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let elevatorHeight = 70;
     let obstacles = [];
     let particles = [];
-    let lastMouseX = 0;
     let difficultyLevel = 1;
     let lastObstacleTime = 0;
     let minObstacleSpacing = 3000;
@@ -248,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             localStorage.setItem('deepDescentLeaderboard', JSON.stringify(leaderboard));
         } catch (e) {
-            console.error('Error saving leaderboard:', e);
+            console.error('Failed to save leaderboard:', e);
         }
     }
     
@@ -282,6 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             depthElement.className = 'leaderboard-depth';
             depthElement.textContent = `${Math.floor(entry.depth)}m`;
             
+            entryElement.style.animationDelay = `${index * 0.1}s`;
+            
             entryElement.appendChild(rankElement);
             entryElement.appendChild(nameElement);
             entryElement.appendChild(depthElement);
@@ -314,10 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateParticles() {
-        const shaft = document.querySelector('.elevator-shaft');
-        
-        if (!shaft.contains(elevatorElement)) {
-            shaft.appendChild(elevatorElement);
+        if (!elevatorShaft.contains(elevatorElement)) {
+            elevatorShaft.appendChild(elevatorElement);
         }
         
         const visibleParticles = [];
@@ -326,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isVisible = particle.update(descentSpeed);
             
             if (isVisible) {
-                particle.draw(shaft);
+                particle.draw(elevatorShaft);
                 visibleParticles.push(particle);
             } else {
                 particle.remove();
@@ -342,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             for (let i = 0; i < particleCount; i++) {
                 const newParticle = new Particle();
-                newParticle.draw(shaft);
+                newParticle.draw(elevatorShaft);
                 particles.push(newParticle);
             }
         }
@@ -431,23 +421,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateBrakingVisuals() {
-        const shaft = document.querySelector('.elevator-shaft');
         const body = document.body;
         
         if (isBraking && canBrake) {
-            shaft.classList.add('braking');
+            elevatorShaft.classList.add('braking');
             body.classList.add('braking');
         } else {
-            shaft.classList.remove('braking');
+            elevatorShaft.classList.remove('braking');
             body.classList.remove('braking');
         }
     }
     
     function updateShaftDimensions() {
-        const shaft = document.querySelector('.elevator-shaft');
-        if (shaft) {
-            shaftWidth = shaft.offsetWidth;
-            shaftHeight = shaft.offsetHeight;
+        if (elevatorShaft) {
+            shaftWidth = elevatorShaft.offsetWidth;
+            shaftHeight = elevatorShaft.offsetHeight;
         }
     }
     
@@ -457,7 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const powerPercentage = (brakePower / maxBrakePower) * 100;
             brakePowerBar.style.width = `${powerPercentage}%`;
             
-            // Show different colors based on power level
             if (powerPercentage < 25) {
                 brakePowerBar.style.backgroundColor = 'var(--danger-color)';
             } else if (powerPercentage < 50) {
@@ -466,7 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 brakePowerBar.style.backgroundColor = 'var(--success-color)';
             }
             
-            // Visual effects for high speed
             if (descentSpeed > 20) {
                 const flashRate = Math.min(1, (descentSpeed - 20) / 20);
                 brakePowerBar.style.opacity = 0.5 + (Math.sin(Date.now() * flashRate * 0.01) * 0.5);
@@ -478,9 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 brakePowerBar.style.boxShadow = '';
             }
             
-            // Visual indicator for the regen dead zone
             if (descentSpeed < brakePowerRegenSpeedThreshold && brakePower < maxBrakePower) {
-                // Add a dimmed appearance to indicate no regeneration
                 brakePowerBar.style.opacity = 0.5;
                 brakePowerBar.style.background = `repeating-linear-gradient(
                     45deg,
@@ -490,7 +474,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     rgba(0, 0, 0, 0.2) 20px
                 )`;
             } else if (descentSpeed <= 20) {
-                // Reset pattern if not in high speed mode (which has its own effects)
                 brakePowerBar.style.background = '';
             }
         }
@@ -500,7 +483,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let lastTimestamp = 0;
         const targetFPS = 60;
         const frameInterval = 1000 / targetFPS;
-        const shaft = document.querySelector('.elevator-shaft');
         
         function gameLoop(timestamp) {
             if (!gameActive) return;
@@ -553,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 updateBrakePowerDisplay();
                 updateBrakingVisuals();
-                obstacles.forEach(obstacle => obstacle.draw(shaft));
+                obstacles.forEach(obstacle => obstacle.draw(elevatorShaft));
                 updateParticles();
                 updateObstacles();
                 checkCollisions();
@@ -580,9 +562,8 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
         
-        const shaft = document.querySelector('.elevator-shaft');
-        shaft.innerHTML = '';
-        shaft.appendChild(elevatorElement);
+        elevatorShaft.innerHTML = '';
+        elevatorShaft.appendChild(elevatorElement);
         
         updateShaftDimensions();
         
@@ -633,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const isHighScore = checkHighScore(currentDepth);
         if (isHighScore) {
-            highScoreMessage.textContent = 'NEW RECORD!';
+            highScoreMessage.textContent = '★ NEW RECORD! ★';
         } else {
             highScoreMessage.textContent = '';
         }
@@ -655,11 +636,11 @@ document.addEventListener('DOMContentLoaded', () => {
         isBraking = false;
     });
     
-    document.querySelector('.elevator-shaft').addEventListener('mouseenter', () => {
+    elevatorShaft.addEventListener('mouseenter', () => {
         mouseIsInGameArea = true;
     });
     
-    document.querySelector('.elevator-shaft').addEventListener('mouseleave', () => {
+    elevatorShaft.addEventListener('mouseleave', () => {
         mouseIsInGameArea = false;
     });
     
@@ -788,7 +769,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 currentDepthDisplay.style.color = 'var(--depth-color)';
             }, 200);
-            
         }, 18000);
     }
     
@@ -797,8 +777,6 @@ document.addEventListener('DOMContentLoaded', () => {
         existingDebugElements.forEach(element => element.remove());
         
         if (!debugMode) return;
-        
-        const shaft = document.querySelector('.elevator-shaft');
         
         const elevatorDebug = document.createElement('div');
         elevatorDebug.className = 'debug-box debug-elevator';
@@ -813,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elevatorDebug.style.left = `${elevatorXPx - (elevatorWidthPx / 2)}px`;
         elevatorDebug.style.top = `${elevatorYPx - (elevatorHeightPx / 2)}px`;
         
-        shaft.appendChild(elevatorDebug);
+        elevatorShaft.appendChild(elevatorDebug);
         
         obstacles.forEach(obstacle => {
             const obstacleY = (obstacle.y / 100) * shaftHeight;
@@ -827,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gapDebug.style.left = `${gapLeft}px`;
             gapDebug.style.top = `${obstacleY - (obstacle.height / 2)}px`;
             
-            shaft.appendChild(gapDebug);
+            elevatorShaft.appendChild(gapDebug);
         });
     }
 }); 

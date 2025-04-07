@@ -13,7 +13,6 @@
     --background-color: #222;
     --shaft-color: #1a1a1a;
     --elevator-color: #555;
-    --leviathan-color: #7209b7;
 }
 
 * {
@@ -597,7 +596,6 @@ button:hover {
     border: 1px solid rgba(0, 200, 255, 0.2);
     z-index: 100;
     width: 100%;
-    flex-wrap: wrap;
 }
 
 .brake-power-container {
@@ -681,112 +679,4 @@ button:hover {
 .leaderboard-entry:nth-child(3) .leaderboard-depth {
     color: #cd7f32;
     text-shadow: 0 0 8px rgba(205, 127, 50, 0.7);
-}
-
-.leviathan-distance-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-.leviathan-distance-container span {
-    font-size: 1rem;
-    opacity: 0.8;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--leviathan-color);
-}
-
-.leviathan-distance-bar-background {
-    width: 180px;
-    height: 14px;
-    background-color: rgba(68, 68, 68, 0.6);
-    border-radius: 7px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.leviathan-distance-bar {
-    height: 100%;
-    width: 100%;
-    background-color: var(--leviathan-color);
-    border-radius: 7px;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 8px rgba(114, 9, 183, 0.5);
-}
-
-.leviathan {
-    width: 120px;
-    height: 120px;
-    background-color: var(--leviathan-color);
-    position: absolute;
-    bottom: -20%;
-    left: 50%;
-    transform: translate(-50%, 0) scaleY(0.8);
-    box-shadow: 
-        0 0 30px rgba(114, 9, 183, 0.8),
-        0 0 50px rgba(114, 9, 183, 0.3);
-    z-index: 9;
-    border-radius: 50% 50% 0 0;
-    transition: bottom 0.5s ease-out;
-    
-    /* Tentacles using pseudo-elements */
-    overflow: visible;
-}
-
-.leviathan::before, .leviathan::after {
-    content: '';
-    position: absolute;
-    width: 25px;
-    height: 60px;
-    background-color: var(--leviathan-color);
-    border-radius: 15px;
-    top: -20px;
-    animation: tentacleWave 3s infinite alternate ease-in-out;
-}
-
-.leviathan::before {
-    left: 20px;
-    transform: rotate(-30deg);
-    animation-delay: 0.5s;
-}
-
-.leviathan::after {
-    right: 20px;
-    transform: rotate(30deg);
-    animation-delay: 0s;
-}
-
-@keyframes tentacleWave {
-    0%, 100% { transform: rotate(-30deg) translateY(0); }
-    50% { transform: rotate(-45deg) translateY(-10px); }
-}
-
-.leviathan.approaching {
-    animation: approachPulse 0.8s infinite alternate ease-in-out;
-}
-
-.leviathan.close {
-    animation: closePulse 0.5s infinite alternate ease-in-out;
-}
-
-@keyframes approachPulse {
-    from { box-shadow: 0 0 30px rgba(114, 9, 183, 0.8); }
-    to { box-shadow: 0 0 50px rgba(114, 9, 183, 0.9); }
-}
-
-@keyframes closePulse {
-    from { box-shadow: 0 0 40px rgba(114, 9, 183, 0.9); }
-    to { box-shadow: 0 0 60px rgba(255, 0, 0, 0.8); }
-}
-
-.elevator-shaft.collision {
-    animation: collisionFlash 0.3s;
-}
-
-@keyframes collisionFlash {
-    0% { background-color: rgba(255, 0, 0, 0.1); }
-    50% { background-color: rgba(255, 0, 0, 0.3); }
-    100% { background-color: rgba(0, 0, 0, 0.3); }
 } 

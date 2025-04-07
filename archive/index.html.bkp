@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEVIATHAN | Descent</title>
+    <title>DEEP DESCENT | LD57</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
         <div class="welcome-screen" id="welcomeScreen">
-            <h1>LEVIATHAN</h1>
-            <p>Descend as deep as you can before the beast catches you!</p>
+            <h1>DEEP<br>DESCENT</h1>
+            <p>How deep can you go?</p>
             <div class="input-container">
                 <input type="text" id="playerName" placeholder="ENTER YOUR NAME" maxlength="15">
                 <button id="startButton">BEGIN DESCENT</button>
             </div>
             <p style="font-size: 0.9rem; margin-top: 1rem;">
                 HOLD ANYWHERE to brake<br>
-                MOVE MOUSE to navigate obstacles
+                MOVE MOUSE to dodge obstacles
             </p>
         </div>
 
@@ -37,29 +37,20 @@
                         <div id="brakePowerBar" class="brake-power-bar"></div>
                     </div>
                 </div>
-                
-                <!-- New leviathan proximity meter -->
-                <div class="leviathan-distance-container">
-                    <span>LEVIATHAN</span>
-                    <div class="leviathan-distance-bar-background">
-                        <div id="leviathanDistanceBar" class="leviathan-distance-bar"></div>
-                    </div>
-                </div>
             </div>
             
             <div class="game-instructions">
-                MOVE to navigate obstacles - HOLD to brake - AVOID BEING CAUGHT
+                MOVE to navigate gaps - HOLD to brake
             </div>
             
             <div class="elevator-shaft">
                 <div class="elevator" id="elevator"></div>
-                <div id="leviathan" class="leviathan hidden"></div>
             </div>
         </div>
 
         <div class="results-screen hidden" id="resultsScreen">
             <h2>DESCENT COMPLETE</h2>
-            <p>You reached a depth of <span id="finalDepth">0</span>m before the Leviathan caught you</p>
+            <p>You reached a depth of <span id="finalDepth">0</span>m</p>
             <div class="high-score-message" id="highScoreMessage"></div>
             
             <div class="leaderboard">
@@ -71,7 +62,6 @@
         </div>
     </div>
 
-    <!-- Load game using ES modules -->
-    <script type="module" src="js/main.js"></script>
+    <script src="script.js"></script>
 </body>
 </html> 

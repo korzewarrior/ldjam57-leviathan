@@ -43,7 +43,16 @@ const gameState = {
     difficultyLevel: 1,
     lastObstacleTime: 0,
     minObstacleSpacing: 3000,
-    movementFactor: 0.15
+    movementFactor: 0.15,
+    // New Leviathan properties
+    leviathanDistance: 100, // Distance from player (0-100, 0 means caught)
+    maxLeviathanDistance: 100,
+    leviathanSpeed: 0.1, // How fast the leviathan approaches normally
+    collisionSlowdownFactor: 5, // How much a collision slows you down
+    recentlyCollided: false,
+    collisionCooldown: 0,
+    maxCollisionCooldown: 60, // frames
+    leviathanElement: null
 };
 
 // Initialize the game
@@ -58,6 +67,10 @@ function initGame() {
     const playAgainButton = document.getElementById('playAgainButton');
     const elevatorShaft = document.querySelector('.elevator-shaft');
     const elevator = document.querySelector('.elevator');
+    const leviathan = document.getElementById('leviathan');
+    
+    // Store leviathan element
+    gameState.leviathanElement = leviathan;
     
     // Setup event listeners for UI controls
     startButton.addEventListener('click', () => {
@@ -117,7 +130,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         // Clear everything except the elevator
         const childElements = Array.from(elevatorShaft.children);
         childElements.forEach(child => {
-            if (child.id !== 'elevator') {
+            if (child.id !== 'elevator' && child.id !== 'leviathan') {
                 elevatorShaft.removeChild(child);
             }
         });
@@ -126,6 +139,14 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         if (!elevatorShaft.contains(elevatorElement)) {
             elevatorShaft.appendChild(elevatorElement);
         }
+    }
+    
+    // Show the leviathan
+    if (gameState.leviathanElement) {
+        gameState.leviathanElement.classList.remove('hidden');
+        gameState.leviathanElement.classList.remove('approaching');
+        gameState.leviathanElement.classList.remove('close');
+        gameState.leviathanElement.style.bottom = '-20%';
     }
     
     updateShaftDimensions(elevatorShaft);
@@ -149,6 +170,11 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.brakePower = gameState.maxBrakePower;
     gameState.canBrake = true;
     
+    // Reset leviathan state
+    gameState.leviathanDistance = gameState.maxLeviathanDistance;
+    gameState.recentlyCollided = false;
+    gameState.collisionCooldown = 0;
+    
     updateDepthDisplay(gameState.currentDepth);
     updateBrakePowerDisplay(
         gameState.brakePower, 
@@ -156,6 +182,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         gameState.descentSpeed, 
         gameState.brakePowerRegenSpeedThreshold
     );
+    updateLeviathanDistanceDisplay();
     
     if (gameState.obstacleInterval) clearInterval(gameState.obstacleInterval);
     if (gameState.difficultyTimer) clearInterval(gameState.difficultyTimer);
@@ -175,6 +202,11 @@ function endGame() {
     
     gameState.obstacles = [];
     gameState.particles = [];
+    
+    // Hide the leviathan
+    if (gameState.leviathanElement) {
+        gameState.leviathanElement.classList.add('hidden');
+    }
     
     showResultsScreen(gameState.playerName, gameState.currentDepth);
 }
@@ -261,11 +293,24 @@ function setupGameLoop() {
                     gameState.brakePowerRegenSpeedThreshold
                 );
                 updateBrakingVisuals(gameState.isBraking, gameState.canBrake);
+                updateLeviathanDistanceDisplay();
             }
             
             // Update game entities
             updateParticles();
             updateObstacles();
+            
+            // Handle collision cooldown
+            if (gameState.recentlyCollided) {
+                gameState.collisionCooldown--;
+                if (gameState.collisionCooldown <= 0) {
+                    gameState.recentlyCollided = false;
+                    gameState.collisionCooldown = 0;
+                }
+            }
+            
+            // Update leviathan position and check for game over
+            updateLeviathan(frameCount);
             
             // Always check for collisions
             checkCollisions();
@@ -284,6 +329,78 @@ function setupGameLoop() {
     requestAnimationFrame(gameLoop);
     createObstacleInterval();
     setupDifficultyProgression();
+}
+
+// Update leviathan position and check if it caught the player
+function updateLeviathan(frameCount) {
+    // Update leviathan distance
+    let baseApproachRate = gameState.leviathanSpeed;
+    
+    // Leviathan gets faster as depth increases
+    const depthFactor = Math.min(1 + (gameState.currentDepth / 500), 3);
+    baseApproachRate *= depthFactor;
+    
+    // Leviathan catches up faster when player is slow
+    const speedFactor = Math.max(0.5, Math.min(1.5, gameState.descentSpeed / 15));
+    const approachRate = baseApproachRate / speedFactor;
+    
+    // Reduce distance (leviathan gets closer)
+    gameState.leviathanDistance -= approachRate;
+    
+    // If there was a recent collision, leviathan gains ground faster
+    if (gameState.recentlyCollided) {
+        gameState.leviathanDistance -= baseApproachRate * 2;
+    }
+    
+    // Check if leviathan caught the player
+    if (gameState.leviathanDistance <= 0) {
+        gameState.leviathanDistance = 0;
+        endGame();
+        return;
+    }
+    
+    // Update leviathan visual position every 4 frames for performance
+    if (frameCount % 4 === 0 && gameState.leviathanElement) {
+        const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
+        // Convert normalized distance to visual position
+        // When distance is 0, bottom should be 10% (caught)
+        // When distance is 100, bottom should be -20% (far away)
+        const bottomPosition = 10 - (normalizedDistance * 30);
+        gameState.leviathanElement.style.bottom = `${bottomPosition}%`;
+        
+        // Add visual indicators when leviathan is close
+        if (normalizedDistance < 0.3) {
+            gameState.leviathanElement.classList.add('close');
+            gameState.leviathanElement.classList.remove('approaching');
+        } else if (normalizedDistance < 0.5) {
+            gameState.leviathanElement.classList.add('approaching');
+            gameState.leviathanElement.classList.remove('close');
+        } else {
+            gameState.leviathanElement.classList.remove('approaching');
+            gameState.leviathanElement.classList.remove('close');
+        }
+    }
+}
+
+// Update the leviathan distance display
+function updateLeviathanDistanceDisplay() {
+    const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
+    if (leviathanDistanceBar) {
+        const distancePercentage = (gameState.leviathanDistance / gameState.maxLeviathanDistance) * 100;
+        leviathanDistanceBar.style.width = `${distancePercentage}%`;
+        
+        // Change color based on proximity
+        if (distancePercentage < 25) {
+            leviathanDistanceBar.style.backgroundColor = 'var(--danger-color)';
+            leviathanDistanceBar.style.boxShadow = '0 0 10px rgba(255, 60, 90, 0.7)';
+        } else if (distancePercentage < 50) {
+            leviathanDistanceBar.style.backgroundColor = 'var(--brake-color)';
+            leviathanDistanceBar.style.boxShadow = '0 0 8px rgba(255, 102, 0, 0.6)';
+        } else {
+            leviathanDistanceBar.style.backgroundColor = 'var(--leviathan-color)';
+            leviathanDistanceBar.style.boxShadow = '0 0 8px rgba(114, 9, 183, 0.5)';
+        }
+    }
 }
 
 // Particle management
@@ -473,6 +590,9 @@ function setupDifficultyProgression() {
         gameState.difficultyLevel += 0.3;
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
+        // Increase leviathan speed as difficulty increases
+        gameState.leviathanSpeed += 0.01;
+        
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
             currentDepthDisplay.style.color = 'var(--danger-color)';
@@ -483,8 +603,13 @@ function setupDifficultyProgression() {
     }, 18000);
 }
 
-// Collision detection
+// Collision detection - modified to slow down player instead of ending the game
 function checkCollisions() {
+    // Skip collision check if player already recently collided
+    if (gameState.recentlyCollided) {
+        return;
+    }
+    
     let collision = false;
     
     gameState.obstacles.forEach(obstacle => {
@@ -503,6 +628,12 @@ function checkCollisions() {
             if (obstacle.isInDOM) {
                 obstacle.leftElement.style.backgroundColor = 'red';
                 obstacle.rightElement.style.backgroundColor = 'red';
+                
+                // Reset color after a short delay
+                setTimeout(() => {
+                    obstacle.leftElement.style.backgroundColor = '';
+                    obstacle.rightElement.style.backgroundColor = '';
+                }, 300);
             }
             
             collision = true;
@@ -510,10 +641,29 @@ function checkCollisions() {
     });
     
     if (collision) {
-        // Add a small delay before ending the game so we can see the collision
-        setTimeout(() => {
+        // Flash the background to indicate collision
+        const elevatorShaft = document.querySelector('.elevator-shaft');
+        if (elevatorShaft) {
+            elevatorShaft.classList.add('collision');
+            setTimeout(() => {
+                elevatorShaft.classList.remove('collision');
+            }, 300);
+        }
+        
+        // Slow down the player
+        gameState.descentSpeed = Math.max(gameState.minSpeed, gameState.descentSpeed / gameState.collisionSlowdownFactor);
+        
+        // Set collision state
+        gameState.recentlyCollided = true;
+        gameState.collisionCooldown = gameState.maxCollisionCooldown;
+        
+        // Decrease leviathan distance (leviathan gets closer)
+        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 10);
+        
+        // If leviathan catches player, end the game
+        if (gameState.leviathanDistance <= 0) {
             endGame();
-        }, 100);
+        }
     }
 }
 
