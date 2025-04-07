@@ -1,8 +1,20 @@
 import { checkHighScore, displayLeaderboard } from './leaderboard.js';
-import { VERSION } from './version.js';
+import { VERSION, clearVersionCache } from './version.js';
 
 // Log the version on import to make sure it's loading correctly
 console.log('Version module loaded: ' + VERSION);
+
+// Force clear any cache and update the version display
+clearVersionCache();
+
+// Force update the version display immediately after module loads
+setTimeout(function() {
+    const versionElement = document.getElementById('versionNumber');
+    if (versionElement) {
+        console.log('Forcing immediate version update to: ' + VERSION);
+        versionElement.textContent = VERSION;
+    }
+}, 500);
 
 function updateDepthDisplay(currentDepth) {
     const currentDepthDisplay = document.getElementById('currentDepth');
