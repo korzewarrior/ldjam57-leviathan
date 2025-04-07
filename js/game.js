@@ -301,6 +301,12 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
 function endGame() {
     gameState.gameActive = false;
     
+    // Release pointer lock if it's active
+    if (document.pointerLockElement) {
+        document.exitPointerLock();
+        console.log('Pointer lock released on game end.'); // Optional: for debugging
+    }
+    
     if (gameState.obstacleInterval) clearInterval(gameState.obstacleInterval);
     if (gameState.difficultyTimer) clearInterval(gameState.difficultyTimer);
     
