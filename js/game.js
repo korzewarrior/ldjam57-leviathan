@@ -562,7 +562,7 @@ function updateLeviathan(frameCount) {
         // Game over - leviathan has caught up
         if (gameState.leviathanElement) {
             // Position the leviathan directly on screen when game is over
-            gameState.leviathanElement.style.top = '10%';
+            gameState.leviathanElement.style.top = '-10%';
             gameState.leviathanElement.style.bottom = 'auto'; 
         }
         
@@ -576,7 +576,7 @@ function updateLeviathan(frameCount) {
         
         // Convert distance to position (0 = caught up, maxDistance = starting position)
         // With the new longer leviathan, adjust the position range
-        const topPosition = 10 - (normalizedDistance * 80);
+        const topPosition = -10 - (normalizedDistance * 70);
         
         // Set the position
         gameState.leviathanElement.style.bottom = 'auto';
