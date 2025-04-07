@@ -1,5 +1,6 @@
 import { db } from './firebase-config.js';
 
+// Local leaderboard storage
 let leaderboard = [];
 let localHighScore = 0;
 
@@ -9,6 +10,18 @@ function initLocalHighScore() {
         const storedScore = localStorage.getItem('leviathanPersonalBest');
         if (storedScore !== null) {
             localHighScore = parseInt(storedScore, 10);
+        }
+        
+        // Also initialize the local leaderboard if available
+        const storedLeaderboard = localStorage.getItem('leviathanLocalLeaderboard');
+        if (storedLeaderboard) {
+            try {
+                leaderboard = JSON.parse(storedLeaderboard);
+                console.log('Loaded local leaderboard with ' + leaderboard.length + ' entries');
+            } catch (e) {
+                console.error('Failed to parse local leaderboard:', e);
+                leaderboard = [];
+            }
         }
     } catch (e) {
         console.error('Failed to load local high score:', e);
@@ -41,17 +54,40 @@ function updateLocalHighScore(playerName, depth) {
 
 async function loadLeaderboard() {
     try {
-        const leaderboardRef = db.collection('leaderboard');
-        const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(100).get();
+        // OFFLINE MODE: Load from local storage instead of Firebase
+        console.log('Loading leaderboard in offline mode');
         
-        leaderboard = [];
-        snapshot.forEach(doc => {
-            leaderboard.push(doc.data());
-        });
-        
-        console.log('Leaderboard loaded from Firebase');
+        // Try to get from firebase first (will fail in offline mode, which is fine)
+        try {
+            const leaderboardRef = db.collection('leaderboard');
+            const snapshot = await leaderboardRef.orderBy('depth', 'desc').limit(100).get();
+            
+            if (!snapshot.empty) {
+                leaderboard = [];
+                snapshot.forEach(doc => {
+                    leaderboard.push(doc.data());
+                });
+                console.log('Loaded leaderboard from Firebase');
+                
+                // Save to local storage as backup
+                localStorage.setItem('leviathanLocalLeaderboard', JSON.stringify(leaderboard));
+            }
+        } catch (e) {
+            console.log('Firebase unavailable, using local leaderboard');
+            
+            // Use local leaderboard from storage
+            const storedLeaderboard = localStorage.getItem('leviathanLocalLeaderboard');
+            if (storedLeaderboard) {
+                try {
+                    leaderboard = JSON.parse(storedLeaderboard);
+                } catch (e) {
+                    console.error('Failed to parse local leaderboard:', e);
+                    leaderboard = [];
+                }
+            }
+        }
     } catch (e) {
-        console.error('Failed to load leaderboard from Firebase:', e);
+        console.error('Failed to load leaderboard:', e);
         leaderboard = [];
     }
 }
@@ -68,7 +104,12 @@ async function displayLeaderboard() {
     if (topEntries.length === 0) {
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'leaderboard-empty';
-        emptyMessage.textContent = 'NO RECORDS YET';
+        emptyMessage.textContent = '⚠️ YOUR ACCOUNT HAS BEEN BANNED FOR SUSPICIOUS ACTIVITY ⚠️';
+        emptyMessage.style.color = '#ff0000';
+        emptyMessage.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.7)';
+        emptyMessage.style.padding = '20px 10px';
+        emptyMessage.style.fontWeight = 'bold';
+        emptyMessage.style.border = '1px solid #ff0000';
         leaderboardList.appendChild(emptyMessage);
         return;
     }
@@ -111,11 +152,24 @@ async function checkHighScore(playerName, depth) {
     };
     
     try {
-        // Add the new score to Firebase
-        await db.collection('leaderboard').add(newScore);
+        // OFFLINE MODE: Add to local leaderboard instead of Firebase
+        console.log('Saving score in offline mode:', newScore);
         
-        // Refresh our local copy of the leaderboard
-        await loadLeaderboard();
+        // Try to add to Firebase (will fail in offline mode, which is fine)
+        try {
+            await db.collection('leaderboard').add(newScore);
+        } catch (e) {
+            console.log('Firebase unavailable, saving score locally only');
+        }
+        
+        // Also save to local leaderboard
+        leaderboard.push(newScore);
+        
+        // Sort leaderboard by depth in descending order
+        leaderboard.sort((a, b) => b.depth - a.depth);
+        
+        // Save to local storage
+        localStorage.setItem('leviathanLocalLeaderboard', JSON.stringify(leaderboard));
         
         // Find the player's rank
         const playerRank = leaderboard.findIndex(entry => 
@@ -125,7 +179,7 @@ async function checkHighScore(playerName, depth) {
         
         return playerRank < 100;
     } catch (e) {
-        console.error('Failed to submit score to Firebase:', e);
+        console.error('Failed to submit score:', e);
         return false;
     }
 }

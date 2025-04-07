@@ -789,6 +789,51 @@ button:hover {
     font-family: 'Roboto Mono', monospace;
 }
 
+.offline-notice {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255, 60, 60, 0.8);
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.banned-notice {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #ff0000;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 8px 0;
+    border-top: 1px solid #ff0000;
+    border-bottom: 1px solid #ff0000;
+    animation: banPulse 1.2s infinite alternate;
+    z-index: 100;
+}
+
+@keyframes banPulse {
+    0% {
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #ff0000;
+        transform: scale(0.98);
+    }
+    100% {
+        background-color: rgba(60, 0, 0, 0.8);
+        color: #ff6666;
+        transform: scale(1.02);
+    }
+}
+
 .results-screen {
     animation: fadeIn 0.5s ease-out;
 }
