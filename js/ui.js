@@ -78,7 +78,6 @@ function showResultsScreen(playerName, currentDepth) {
     const gameScreen = document.getElementById('gameScreen');
     const resultsScreen = document.getElementById('resultsScreen');
     const finalDepthDisplay = document.getElementById('finalDepth');
-    const highScoreMessage = document.getElementById('highScoreMessage');
     
     gameScreen.classList.add('hidden');
     resultsScreen.classList.remove('hidden');
@@ -86,14 +85,22 @@ function showResultsScreen(playerName, currentDepth) {
     const finalDepth = Math.floor(currentDepth);
     finalDepthDisplay.textContent = finalDepth;
     
-    const isHighScore = checkHighScore(playerName, currentDepth);
-    if (isHighScore) {
-        highScoreMessage.textContent = '★ NEW RECORD! ★';
-    } else {
-        highScoreMessage.textContent = '';
-    }
+    // Still check for high score but don't display a message
+    checkHighScore(playerName, currentDepth);
     
     displayLeaderboard();
+    
+    // Add a hint message
+    let hintElement = document.getElementById('clickToRestartHint');
+    if (!hintElement) {
+        hintElement = document.createElement('p');
+        hintElement.id = 'clickToRestartHint';
+        hintElement.style.marginTop = '20px';
+        hintElement.style.fontSize = '0.9rem';
+        hintElement.style.color = 'var(--phase-color)';
+        hintElement.textContent = 'CLICK ANYWHERE TO TRY AGAIN';
+        resultsScreen.appendChild(hintElement);
+    }
 }
 function updateDebugVisuals(gameState, elevatorShaft) {
     const existingDebugElements = document.querySelectorAll('.debug-box');

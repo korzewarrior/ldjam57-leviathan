@@ -66,9 +66,8 @@ function initGame() {
     const gameScreen = document.getElementById('gameScreen');
     const resultsScreen = document.getElementById('resultsScreen');
     const playerNameInput = document.getElementById('playerName');
-    const startButton = document.getElementById('startButton');
     const playerNameDisplay = document.getElementById('playerNameDisplay');
-    const playAgainButton = document.getElementById('playAgainButton');
+    const startButton = document.getElementById('startButton');
     const elevatorShaft = document.querySelector('.elevator-shaft');
     const elevator = document.querySelector('.elevator');
     const leviathan = document.getElementById('leviathan');
@@ -90,7 +89,8 @@ function initGame() {
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
     });
     
-    playAgainButton.addEventListener('click', () => {
+    // Add click event to results screen to restart game
+    resultsScreen.addEventListener('click', () => {
         resultsScreen.classList.add('hidden');
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
     });

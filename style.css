@@ -555,29 +555,6 @@ button:hover {
     margin: 0;
 }
 
-.high-score-message {
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(10, 10, 18, 0.8);
-    border: 2px solid var(--success-color);
-    padding: 15px;
-    border-radius: 5px;
-    text-align: center;
-    animation: pulse 1s infinite alternate;
-    z-index: 10;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 5px rgba(64, 255, 188, 0.5);
-    }
-    100% {
-        box-shadow: 0 0 15px rgba(64, 255, 188, 0.8);
-    }
-}
-
 .leaderboard {
     margin-top: 20px;
     width: 100%;
@@ -644,25 +621,6 @@ button:hover {
     color: var(--text-color);
     font-style: italic;
     opacity: 0.7;
-}
-
-#playAgainButton {
-    background-color: var(--phase-color);
-    color: var(--bg-color);
-    margin-top: 20px;
-    padding: 12px 30px;
-    font-size: 1.1rem;
-    animation: glow 1.5s infinite alternate;
-    transition: all 0.3s;
-}
-
-#playAgainButton:hover {
-    box-shadow: 0 0 15px rgba(0, 191, 255, 0.9);
-    background-color: var(--phase-alt-color);
-}
-
-#playAgainButton:active {
-    transform: scale(0.98);
 }
 
 #finalDepth {
