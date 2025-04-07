@@ -1,6 +1,43 @@
 import { db } from './firebase-config.js';
 
 let leaderboard = [];
+let localHighScore = 0;
+
+// Initialize the local high score from localStorage
+function initLocalHighScore() {
+    try {
+        const storedScore = localStorage.getItem('leviathanPersonalBest');
+        if (storedScore !== null) {
+            localHighScore = parseInt(storedScore, 10);
+        }
+    } catch (e) {
+        console.error('Failed to load local high score:', e);
+    }
+    return localHighScore;
+}
+
+// Update the personal best display in the UI
+function updatePersonalBestDisplay() {
+    const personalBestDisplay = document.getElementById('personalBestValue');
+    if (personalBestDisplay) {
+        personalBestDisplay.textContent = Math.floor(localHighScore);
+    }
+}
+
+// Check and update the local high score if needed
+function updateLocalHighScore(playerName, depth) {
+    if (depth > localHighScore) {
+        try {
+            localHighScore = depth;
+            localStorage.setItem('leviathanPersonalBest', depth.toString());
+            updatePersonalBestDisplay();
+            return true; // Indicates a new personal best
+        } catch (e) {
+            console.error('Failed to save local high score:', e);
+        }
+    }
+    return false; // Not a new personal best
+}
 
 async function loadLeaderboard() {
     try {
@@ -64,6 +101,9 @@ async function displayLeaderboard() {
 async function checkHighScore(playerName, depth) {
     if (!playerName.trim()) return false;
     
+    // Check if it's a new personal best
+    updateLocalHighScore(playerName, depth);
+    
     const newScore = {
         name: playerName,
         depth: depth,
@@ -93,5 +133,8 @@ async function checkHighScore(playerName, depth) {
 export { 
     loadLeaderboard, 
     displayLeaderboard, 
-    checkHighScore 
+    checkHighScore,
+    initLocalHighScore,
+    updateLocalHighScore,
+    updatePersonalBestDisplay
 }; 

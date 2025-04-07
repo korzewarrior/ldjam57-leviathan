@@ -85,16 +85,48 @@ function showResultsScreen(playerName, currentDepth) {
     const finalDepth = Math.floor(currentDepth);
     finalDepthDisplay.textContent = finalDepth;
     
+    // Ensure the leaderboard is scrollable on mobile devices
+    const leaderboardElement = document.querySelector('.leaderboard');
+    if (leaderboardElement) {
+        // Prevent touch events in the leaderboard from triggering parent elements
+        leaderboardElement.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
+        
+        leaderboardElement.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+    }
     
-    checkHighScore(playerName, currentDepth)
-        .then(isHighScore => {
-            return displayLeaderboard();
-        })
-        .catch(error => {
-            console.error('Error updating leaderboard:', error);
-            displayLeaderboard();
-        });
-    
+    // Check if this is a new personal best
+    import('./leaderboard.js').then(module => {
+        const isNewBest = module.updateLocalHighScore(playerName, currentDepth);
+        
+        // Remove existing personal best message if there is one
+        const existingBestMsg = document.getElementById('newPersonalBestMsg');
+        if (existingBestMsg) {
+            existingBestMsg.remove();
+        }
+        
+        // Show new personal best message if achieved
+        if (isNewBest) {
+            const bestMsg = document.createElement('p');
+            bestMsg.id = 'newPersonalBestMsg';
+            bestMsg.className = 'personal-best-message';
+            bestMsg.textContent = 'NEW PERSONAL BEST!';
+            
+            // Insert after the final depth paragraph
+            const depthParagraph = finalDepthDisplay.closest('p');
+            depthParagraph.parentNode.insertBefore(bestMsg, depthParagraph.nextSibling);
+        }
+        
+        return module.checkHighScore(playerName, currentDepth);
+    }).then(isHighScore => {
+        return displayLeaderboard();
+    }).catch(error => {
+        console.error('Error updating leaderboard:', error);
+        displayLeaderboard();
+    });
     
     let hintElement = document.getElementById('clickToRestartHint');
     if (!hintElement) {
