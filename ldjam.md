@@ -1,12 +1,29 @@
 # Leviathan
 
-![banner.png](///raw/94d/71/z/6aa48.png)
+![banner2_square_web.png](///raw/94d/71/z/6aac7.png)
 
 Plunge into the abyssal depths where sunlight fears to tread. Pilot your fragile vessel deeper and deeper into the crushing darkness, guided only by echoes of something immense, something ancient. The pressure mounts, resources dwindle, and the shadows writhe with unseen terrors.
 
 You are hunted. A relentless presence descends from above, a colossal shadow chasing you down into the unknown. Push deeper, faster, using your wits and limited boost to stay ahead. Every meter gained is a desperate victory against the crushing weight of the ocean and the inevitable pursuit.
 
 What secrets lie hidden in the crushing black? What price must be paid to escape the abyss? Face the vast, somber terror that hunts you and discover the chilling truth lurking in the heart of the ocean.
+
+---
+
+## Screenshots
+
+<div align="center">
+
+![Main Menu](images/screenshot-menu_optimized.png)
+*Main Menu*
+
+![Gameplay - Deep in the Abyss](images/screenshot-gameplay_optimized.png)
+*Gameplay - Deep in the Abyss*
+
+![Leaderboard](images/screenshot-leaderboard_optimized.png)
+*Leaderboard*
+
+</div>
 
 ---
 
