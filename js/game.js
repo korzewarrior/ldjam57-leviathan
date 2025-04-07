@@ -81,6 +81,7 @@ function initGame() {
     updatePersonalBestDisplay();
     
     // Ensure the welcome screen is displayed and version is updated
+    console.log('Calling showWelcomeScreen from initGame');
     showWelcomeScreen();
     
     try {

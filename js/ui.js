@@ -1,6 +1,9 @@
 import { checkHighScore, displayLeaderboard } from './leaderboard.js';
 import { VERSION } from './version.js';
 
+// Log the version on import to make sure it's loading correctly
+console.log('Version module loaded: ' + VERSION);
+
 function updateDepthDisplay(currentDepth) {
     const currentDepthDisplay = document.getElementById('currentDepth');
     if (currentDepthDisplay) {
@@ -71,6 +74,9 @@ function showWelcomeScreen() {
     const versionElement = document.getElementById('versionNumber');
     if (versionElement) {
         versionElement.textContent = VERSION;
+        console.log('Version display updated to: ' + VERSION);
+    } else {
+        console.error('Version element not found! Looking for #versionNumber');
     }
 }
 function showGameScreen() {
