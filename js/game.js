@@ -1,4 +1,3 @@
-// Main game module
 import { Particle, Obstacle } from './entities.js';
 import { 
     updateDepthDisplay, 
@@ -10,16 +9,12 @@ import {
 } from './ui.js';
 import { loadLeaderboard, displayLeaderboard } from './leaderboard.js';
 import { setupInputHandlers } from './input.js';
-
-// Global reference to whether the mouse is down for braking
 let mouseIsDown = false;
-
-// Game state object to keep track of all game variables
 const gameState = {
     playerName: '',
     currentDepth: 0,
     descentSpeed: 0,
-    normalSpeed: 0,  // Track normal speed before phase boost
+    normalSpeed: 0,  
     minSpeed: 2,
     maxSpeed: 60,
     baseAcceleration: 0.03,
@@ -27,7 +22,7 @@ const gameState = {
     phaseBoostActive: false,
     phaseBoostDuration: 0,
     maxPhaseBoostDuration: 10,
-    speedNormalizationRate: 0.08, // Increased from 0.05 for more noticeable deceleration
+    speedNormalizationRate: 0.08, 
     obstacleInterval: null,
     difficultyTimer: null,
     gameActive: false,
@@ -41,34 +36,32 @@ const gameState = {
     shaftWidth: 0,
     shaftHeight: 0,
     elevatorX: 50,
-    lastElevatorX: 50, // Add this to track previous X position
-    elevatorRotation: 0, // Add this to track current rotation
-    maxRotation: 25, // Maximum rotation in degrees
-    rotationSpeed: 0.2, // How quickly to rotate (0-1)
-    elevatorWidth: 40,  // Changed from 70 to 40 for vertical orientation
-    elevatorHeight: 70, // Changed from 40 to 70 for vertical orientation
+    lastElevatorX: 50, 
+    elevatorRotation: 0, 
+    maxRotation: 25, 
+    rotationSpeed: 0.2, 
+    elevatorWidth: 40,  
+    elevatorHeight: 70, 
     obstacles: [],
     particles: [],
     difficultyLevel: 1,
     lastObstacleTime: 0,
     minObstacleSpacing: 3000,
     movementFactor: 0.15,
-    // New Leviathan properties
-    leviathanDistance: 100, // Distance from player (0-100, 0 means caught)
+    
+    leviathanDistance: 100, 
     maxLeviathanDistance: 100,
-    leviathanSpeed: 0.025, // Reduced from 0.03 to make it easier to escape
-    collisionSlowdownFactor: 2.0, // Reduced to make collisions less punishing
+    leviathanSpeed: 0.025, 
+    collisionSlowdownFactor: 2.0, 
     recentlyCollided: false,
     collisionCooldown: 0,
-    maxCollisionCooldown: 60, // frames
+    maxCollisionCooldown: 60, 
     leviathanElement: null,
     phaseSound: null,
     bubbleInterval: null
 };
-
-// Initialize the game
 function initGame() {
-    // Get DOM elements
+    
     const welcomeScreen = document.getElementById('welcomeScreen');
     const gameScreen = document.getElementById('gameScreen');
     const resultsScreen = document.getElementById('resultsScreen');
@@ -80,19 +73,19 @@ function initGame() {
     const elevator = document.querySelector('.elevator');
     const leviathan = document.getElementById('leviathan');
     
-    // Store leviathan element
+    
     gameState.leviathanElement = leviathan;
     
-    // Initialize phase sound
+    
     try {
         gameState.phaseSound = new Audio();
-        gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yboq//8BAAEAKysDA/n5dXUICAYGxsb////19ZaWtLT9/aGhPDwPD93d9vZQUAcHvr78/ImJBQXW1uno0tKYmA4ONzfl5fv7HR0aGgEBy8sAAAYGDg4FBQAAxMQEBAQEzs4ICPDw//8gIJCQOzs2Nqurjo5JSeru19disKioFBQDA8vL8PBnZ8zMsrLJyQ8PERH5+Q8PIiIzMwQEsrJ7e/b2pKQbGwIC4eH9/QYGBAT6+ufnqqoXF8XFlZX29vr6AgL9/QgIFBQJCSEhCQn5+QcHHh4UFAMDCQkPDw8PAQH9/QEBBAQBAf//AwMDAwEBAwMDAwEBAwMDAwEBAwMDAw8P/v4cHAsL8fHv76am7OzW1vf3JSUTEA0N+fkAAPf3+/vW1qqq/v45OUJCx8f397m5dXUGBvz8Fxfr6+Tk/f3w8BcXFRUWFh4eCQkNDQUFw8PMzCYmAgL//wQE+/v//wIC/f0AAP//AQEBAQAAAAD//wAA//8BAQEBAAAAAPv7/f319enp7e3s7AEBAgL//wAA//8BAQEBAQAAAP//AAD//wAA//8DAQQE/f0AAAAABAT9/f//AgIEBP39//8CAgQE/f3//wICAQEAAAAA//8AAAAA//8AAP//AwP+/v//AgIDA/7+//8CAgMD/v7//wICAwP+/v//AgIDAwEBAAAAAAAA//8AAP//AwMBAQAA//8AAAEBAgL//wAA//8BAQIC//8AAP//AQEBAQAAAAAAAAAAAAD//wAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wICAAD//wAA//8CAv//AAAAAP//AAD//wICAAD//wAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wIC//8AAAAA//8CAv//AAD//wIC//8AAP//AgL//wAA//8CAv//AAD//wICAAD//wAA//8BAf//AAD//wEB//8AAAAAAAABAQAAAAAAAAEBAAAAAAAAAQEAAAAAAAABAAAAAAAAAAAA//8AAP//AQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAP//AAABAQAA//8AAAEBAAD//wAAAQEAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAAAAAAAD//wAA//8AAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+        gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yboq
         gameState.phaseSound.volume = 0.5;
     } catch (e) {
         console.error("Could not initialize phase sound", e);
     }
     
-    // Setup event listeners for UI controls
+    
     startButton.addEventListener('click', () => {
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
     });
@@ -102,22 +95,22 @@ function initGame() {
         startGame(playerNameInput, playerNameDisplay, elevatorShaft);
     });
     
-    // Setup input handlers
+    
     setupInputHandlers(gameState, elevatorShaft, elevator);
     
-    // Set up mouse and touch events for phasing instead of braking
+    
     window.addEventListener('mousedown', () => {
         if (gameState.gameActive && gameState.canPhase) {
             gameState.isPhasing = true;
             
-            // Save normal speed before activating the boost
+            
             gameState.normalSpeed = gameState.descentSpeed;
             
-            // Add phase surge effect when first activated
+            
             gameState.phaseBoostActive = true;
             gameState.phaseBoostDuration = gameState.maxPhaseBoostDuration;
             
-            // Play phase sound
+            
             if (gameState.phaseSound) {
                 try {
                     gameState.phaseSound.currentTime = 0;
@@ -127,13 +120,13 @@ function initGame() {
                 }
             }
             
-            // Add phase effect to elevator
+            
             const elevator = document.getElementById('elevator');
             if (elevator) {
                 elevator.classList.add('phasing');
                 elevator.classList.remove('normalizing-speed');
                 
-                // Add or update the trail element for vertical orientation
+                
                 let trail = elevator.querySelector('.trail');
                 if (!trail) {
                     trail = document.createElement('div');
@@ -141,7 +134,7 @@ function initGame() {
                     elevator.appendChild(trail);
                 }
                 
-                // Ensure propulsion trail exists and is enhanced during phasing
+                
                 let propulsionTrail = elevator.querySelector('.propulsion-trail');
                 if (!propulsionTrail) {
                     propulsionTrail = document.createElement('div');
@@ -149,7 +142,7 @@ function initGame() {
                     elevator.appendChild(propulsionTrail);
                 }
                 
-                // Start creating bubbles
+                
                 if (!gameState.bubbleInterval) {
                     gameState.bubbleInterval = setInterval(() => {
                         if (gameState.isPhasing && gameState.gameActive) {
@@ -167,58 +160,56 @@ function initGame() {
     window.addEventListener('mouseup', () => {
         gameState.isPhasing = false;
         
-        // Remove phase effect from elevator
+        
         const elevator = document.getElementById('elevator');
         if (elevator) {
             elevator.classList.remove('phasing');
             
-            // Remove trail element
+            
             const trail = elevator.querySelector('.trail');
             if (trail) {
                 elevator.removeChild(trail);
             }
             
-            // Keep propulsion trail but let it return to normal state
-            // through CSS transitions
+            
+            
         }
         
-        // Clear bubble interval
+        
         if (gameState.bubbleInterval) {
             clearInterval(gameState.bubbleInterval);
             gameState.bubbleInterval = null;
         }
     });
     
-    // Load initial leaderboard
+    
     loadLeaderboard();
     displayLeaderboard();
     
-    // Window resize handler
+    
     window.addEventListener('resize', () => {
         if (gameState.gameActive) {
             updateShaftDimensions(elevatorShaft);
         }
     });
 }
-
-// Start a new game
 function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.playerName = playerNameInput.value.trim() || 'ANONYMOUS';
     playerNameDisplay.textContent = gameState.playerName;
     
     showGameScreen();
     
-    // Save a reference to the elevator element before clearing the shaft
+    
     const elevatorElement = document.getElementById('elevator');
     
-    // Create a new elevator if the original one doesn't exist
+    
     if (!elevatorElement) {
         console.error('Elevator element not found, creating a new one');
         const newElevator = document.createElement('div');
         newElevator.id = 'elevator';
         newElevator.className = 'elevator';
         
-        // Add propulsion trail
+        
         const trail = document.createElement('div');
         trail.className = 'propulsion-trail';
         newElevator.appendChild(trail);
@@ -226,7 +217,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         elevatorShaft.innerHTML = '';
         elevatorShaft.appendChild(newElevator);
     } else {
-        // Clear everything except the elevator
+        
         const childElements = Array.from(elevatorShaft.children);
         childElements.forEach(child => {
             if (child.id !== 'elevator' && child.id !== 'leviathan') {
@@ -234,12 +225,12 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
             }
         });
         
-        // Make sure elevator is in the shaft
+        
         if (!elevatorShaft.contains(elevatorElement)) {
             elevatorShaft.appendChild(elevatorElement);
         }
         
-        // Add propulsion trail if it doesn't exist
+        
         if (!elevatorElement.querySelector('.propulsion-trail')) {
             const trail = document.createElement('div');
             trail.className = 'propulsion-trail';
@@ -247,7 +238,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         }
     }
     
-    // Show the leviathan
+    
     if (gameState.leviathanElement) {
         gameState.leviathanElement.classList.remove('hidden');
         gameState.leviathanElement.classList.remove('approaching');
@@ -258,7 +249,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     
     updateShaftDimensions(elevatorShaft);
     
-    // Reset game state
+    
     gameState.currentDepth = 0;
     gameState.descentSpeed = 5;
     gameState.gameActive = true;
@@ -277,7 +268,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.phasePower = gameState.maxPhasePower;
     gameState.canPhase = true;
     
-    // Reset leviathan state
+    
     gameState.leviathanDistance = gameState.maxLeviathanDistance;
     gameState.recentlyCollided = false;
     gameState.collisionCooldown = 0;
@@ -296,8 +287,6 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     
     setupGameLoop();
 }
-
-// End the current game
 function endGame() {
     gameState.gameActive = false;
     
@@ -310,23 +299,19 @@ function endGame() {
     gameState.obstacles = [];
     gameState.particles = [];
     
-    // Hide the leviathan
+    
     if (gameState.leviathanElement) {
         gameState.leviathanElement.classList.add('hidden');
     }
     
     showResultsScreen(gameState.playerName, gameState.currentDepth);
 }
-
-// Update shaft dimensions
 function updateShaftDimensions(elevatorShaft) {
     if (elevatorShaft) {
         gameState.shaftWidth = elevatorShaft.offsetWidth;
         gameState.shaftHeight = elevatorShaft.offsetHeight;
     }
 }
-
-// Main game loop
 function setupGameLoop() {
     let lastTimestamp = 0;
     const targetFPS = 60;
@@ -344,18 +329,18 @@ function setupGameLoop() {
             
             gameState.currentDepth += gameState.descentSpeed / 100;
             
-            // Only update the display every 5 frames for better performance
+            
             if (frameCount % 5 === 0) {
                 updateDepthDisplay(gameState.currentDepth);
             }
             
-            // Update submarine orientation
+            
             updateSubmarineOrientation();
             
             const depthFactor = Math.min(1 + (gameState.currentDepth / 300), 4);
             const currentAcceleration = gameState.baseAcceleration * depthFactor;
             
-            // Handle phasing (formerly braking)
+            
             if (gameState.isPhasing && gameState.canPhase) {
                 gameState.phasePower -= gameState.phasePowerConsumptionRate;
                 
@@ -363,7 +348,7 @@ function setupGameLoop() {
                     gameState.phasePower = 0;
                     gameState.canPhase = false;
                     
-                    // Ensure phasing is turned off when power depleted
+                    
                     gameState.isPhasing = false;
                     gameState.phaseBoostActive = false;
                     const elevator = document.getElementById('elevator');
@@ -372,14 +357,14 @@ function setupGameLoop() {
                     }
                 }
                 
-                // Save normal speed when we first activate phasing
+                
                 if (gameState.phaseBoostActive && gameState.phaseBoostDuration === gameState.maxPhaseBoostDuration) {
                     gameState.normalSpeed = gameState.descentSpeed;
                 }
                 
-                // Instead of a small boost, give a significant speed surge when phasing
+                
                 if (gameState.phaseBoostActive) {
-                    // Initial activation gives a modest boost (15% increase - reduced from 30%)
+                    
                     gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.15);
                     
                     gameState.phaseBoostDuration--;
@@ -387,17 +372,17 @@ function setupGameLoop() {
                         gameState.phaseBoostActive = false;
                     }
                 } else {
-                    // Sustained phasing gives a smaller boost (2% per frame - reduced from 5%)
+                    
                     gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.02);
                 }
             } else {
-                // Phase boost deactivates when phasing stops
+                
                 gameState.phaseBoostActive = false;
                 
-                // Normalize speed back to pre-phase level gradually when not phasing
+                
                 if (gameState.normalSpeed > 0 && Math.abs(gameState.descentSpeed - gameState.normalSpeed) > 1) {
                     if (gameState.descentSpeed > gameState.normalSpeed) {
-                        // Gradually reduce speed back to normal
+                        
                         const reductionAmount = Math.max(
                             0.5, 
                             (gameState.descentSpeed - gameState.normalSpeed) * gameState.speedNormalizationRate
@@ -407,24 +392,24 @@ function setupGameLoop() {
                             gameState.descentSpeed - reductionAmount
                         );
                         
-                        // Add visual effect to show speed normalization
+                        
                         const elevator = document.getElementById('elevator');
                         if (elevator) {
                             elevator.classList.add('normalizing-speed');
                         }
                     }
                 } else {
-                    // Reset normal speed tracking once we've returned to normal
+                    
                     gameState.normalSpeed = 0;
                     
-                    // Remove the normalizing effect
+                    
                     const elevator = document.getElementById('elevator');
                     if (elevator) {
                         elevator.classList.remove('normalizing-speed');
                     }
                 }
                 
-                // Handle phase power regeneration
+                
                 if (gameState.phasePower < gameState.maxPhasePower) {
                     if (gameState.descentSpeed >= gameState.phasePowerRegenSpeedThreshold) {
                         const speedFactor = Math.max(0.3, 1 - (gameState.descentSpeed / 50));
@@ -436,25 +421,25 @@ function setupGameLoop() {
                         }
                     }
                     
-                    // Only allow phasing again once we reach 30% power
+                    
                     if (!gameState.canPhase && gameState.phasePower >= gameState.maxPhasePower * 0.3) {
                         gameState.canPhase = true;
                     }
                 }
                 
-                // Increase speed (if we're not normalizing from phase boost)
+                
                 if (gameState.normalSpeed === 0) {
                     gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed + currentAcceleration);
                 }
                 
-                // Auto-brake at extreme speeds
+                
                 if (gameState.descentSpeed > 30) {
                     const autobrake = (gameState.descentSpeed - 30) * 0.005;
                     gameState.descentSpeed = Math.max(30, gameState.descentSpeed - autobrake);
                 }
             }
             
-            // Update visual elements only every 3 frames for better performance
+            
             if (frameCount % 3 === 0) {
                 updatePhasePowerDisplay(
                     gameState.phasePower, 
@@ -466,11 +451,11 @@ function setupGameLoop() {
                 updateLeviathanDistanceDisplay();
             }
             
-            // Update game entities
+            
             updateParticles();
             updateObstacles();
             
-            // Handle collision cooldown
+            
             if (gameState.recentlyCollided) {
                 gameState.collisionCooldown--;
                 if (gameState.collisionCooldown <= 0) {
@@ -479,13 +464,13 @@ function setupGameLoop() {
                 }
             }
             
-            // Update leviathan position and check for game over
+            
             updateLeviathan(frameCount);
             
-            // Always check for collisions
+            
             checkCollisions();
             
-            // Debug visuals only every 10 frames if enabled
+            
             if (gameState.debugMode && frameCount % 10 === 0) {
                 updateDebugVisuals(gameState, document.querySelector('.elevator-shaft'));
             }
@@ -500,46 +485,44 @@ function setupGameLoop() {
     createObstacleInterval();
     setupDifficultyProgression();
 }
-
-// Update leviathan position and check if it caught the player
 function updateLeviathan(frameCount) {
-    // Update leviathan distance
+    
     let baseApproachRate = gameState.leviathanSpeed;
     
-    // Leviathan gets faster as depth increases
-    const depthFactor = Math.min(1 + (gameState.currentDepth / 800), 2.0); // Reduced from 500 to 800, max factor from 2.5 to 2.0
+    
+    const depthFactor = Math.min(1 + (gameState.currentDepth / 800), 2.0); 
     baseApproachRate *= depthFactor;
     
-    // Leviathan catches up faster when player is slow
-    const speedFactor = Math.max(0.5, Math.min(2.8, gameState.descentSpeed / 12)); // Increased max factor and lowered division
+    
+    const speedFactor = Math.max(0.5, Math.min(2.8, gameState.descentSpeed / 12)); 
     const approachRate = baseApproachRate / speedFactor;
     
-    // Track if player is escaping 
+    
     let isEscaping = false;
     
-    // When player is going fast, they can create some distance
-    if (gameState.descentSpeed > 16 && !gameState.recentlyCollided) { // Lowered threshold from 20 to 16
-        // Player can increase distance by going fast
+    
+    if (gameState.descentSpeed > 16 && !gameState.recentlyCollided) { 
+        
         const previousDistance = gameState.leviathanDistance;
         gameState.leviathanDistance = Math.min(
             gameState.maxLeviathanDistance, 
-            gameState.leviathanDistance + (gameState.descentSpeed - 16) * 0.05 // Increased from 0.03 to 0.05
+            gameState.leviathanDistance + (gameState.descentSpeed - 16) * 0.05 
         );
         
-        // Check if we're actually gaining distance
+        
         isEscaping = gameState.leviathanDistance > previousDistance;
     } else {
-        // Reduce distance (leviathan gets closer)
+        
         gameState.leviathanDistance -= approachRate;
         isEscaping = false;
     }
     
-    // Apply visual effects for escaping
+    
     const elevatorShaft = document.querySelector('.elevator-shaft');
     const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
     
     if (isEscaping) {
-        // Add visual feedback when escaping
+        
         if (gameState.leviathanElement) {
             gameState.leviathanElement.classList.add('escaping');
             gameState.leviathanElement.classList.remove('approaching', 'close');
@@ -553,7 +536,7 @@ function updateLeviathan(frameCount) {
             leviathanDistanceBar.classList.add('escaping');
         }
     } else {
-        // Remove escaping visual feedback
+        
         if (gameState.leviathanElement) {
             gameState.leviathanElement.classList.remove('escaping');
         }
@@ -567,39 +550,39 @@ function updateLeviathan(frameCount) {
         }
     }
     
-    // If there was a recent collision, leviathan gains ground faster
+    
     if (gameState.recentlyCollided) {
-        gameState.leviathanDistance -= baseApproachRate * 1.0; // Reduced from 1.2x to 1.0x
+        gameState.leviathanDistance -= baseApproachRate * 1.0; 
     }
     
-    // Check if leviathan caught the player
+    
     if (gameState.leviathanDistance <= 0) {
         gameState.leviathanDistance = 0;
         
-        // Set final position for leviathan
+        
         if (gameState.leviathanElement) {
-            // Fix the position to ensure it stays above the player
-            gameState.leviathanElement.style.top = '-10%'; // Changed from 0% to -10% to position the Leviathan even higher
-            gameState.leviathanElement.style.bottom = 'auto'; // Ensure bottom is not set
+            
+            gameState.leviathanElement.style.top = '-10%'; 
+            gameState.leviathanElement.style.bottom = 'auto'; 
         }
         
         endGame();
         return;
     }
     
-    // Update leviathan visual position every 4 frames for performance
+    
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
-        // Convert normalized distance to visual position
-        // When distance is 0, top should be -10% (caught) - changed from 0%
-        // When distance is 100, top should be -50% (far away) - changed from -20%
-        const topPosition = -10 - (normalizedDistance * 40); // Changed from 0/20 to -10/40
         
-        // Position from the top instead of bottom, and ensure bottom is not set
+        
+        
+        const topPosition = -10 - (normalizedDistance * 40); 
+        
+        
         gameState.leviathanElement.style.bottom = 'auto';
         gameState.leviathanElement.style.top = `${topPosition}%`;
         
-        // Add visual indicators when leviathan is close (only if not escaping)
+        
         if (!isEscaping) {
             if (normalizedDistance < 0.3) {
                 gameState.leviathanElement.classList.add('close');
@@ -614,15 +597,13 @@ function updateLeviathan(frameCount) {
         }
     }
 }
-
-// Update the leviathan distance display
 function updateLeviathanDistanceDisplay() {
     const leviathanDistanceBar = document.getElementById('leviathanDistanceBar');
     if (leviathanDistanceBar) {
         const distancePercentage = (gameState.leviathanDistance / gameState.maxLeviathanDistance) * 100;
         leviathanDistanceBar.style.width = `${distancePercentage}%`;
         
-        // Change color based on proximity
+        
         if (distancePercentage < 25) {
             leviathanDistanceBar.style.backgroundColor = 'var(--danger-color)';
             leviathanDistanceBar.style.boxShadow = '0 0 10px rgba(255, 60, 90, 0.7)';
@@ -635,8 +616,6 @@ function updateLeviathanDistanceDisplay() {
         }
     }
 }
-
-// Particle management
 function updateParticles() {
     const elevatorShaft = document.querySelector('.elevator-shaft');
     if (!elevatorShaft) return;
@@ -651,7 +630,7 @@ function updateParticles() {
         elevatorShaft.appendChild(elevatorElement);
     }
     
-    // Process particles in bulk for better performance
+    
     const visibleParticles = [];
     const currentSpeed = gameState.descentSpeed;
     const moveFactor = gameState.movementFactor;
@@ -672,11 +651,11 @@ function updateParticles() {
     
     gameState.particles = visibleParticles;
     
-    // Create new particles if needed
-    const maxParticles = 50; // Reduced from 70 for better performance
+    
+    const maxParticles = 50; 
     
     if (gameState.particles.length < maxParticles) {
-        const newParticlesCount = Math.min(Math.floor(currentSpeed / 5), 2); // Reduced rate
+        const newParticlesCount = Math.min(Math.floor(currentSpeed / 5), 2); 
         
         for (let i = 0; i < newParticlesCount; i++) {
             const newParticle = new Particle();
@@ -685,8 +664,6 @@ function updateParticles() {
         }
     }
 }
-
-// Obstacle management - optimized version
 function updateObstacles() {
     const elevatorShaft = document.querySelector('.elevator-shaft');
     if (!elevatorShaft) return;
@@ -695,7 +672,7 @@ function updateObstacles() {
     const currentSpeed = gameState.descentSpeed;
     const moveFactor = gameState.movementFactor;
     
-    // Process all obstacles at once for better performance
+    
     for (let i = 0; i < gameState.obstacles.length; i++) {
         const obstacle = gameState.obstacles[i];
         const isVisible = obstacle.update(currentSpeed, moveFactor);
@@ -712,10 +689,8 @@ function updateObstacles() {
     
     gameState.obstacles = visibleObstacles;
 }
-
-// Generates new obstacles
 function generateObstacle() {
-    // Make sure the shaft dimensions are valid
+    
     if (!gameState.shaftWidth || !gameState.shaftHeight) {
         const elevatorShaft = document.querySelector('.elevator-shaft');
         if (elevatorShaft) {
@@ -771,7 +746,7 @@ function generateObstacle() {
                 }
             }
             
-            // Draw the obstacle immediately after creating it
+            
             const elevatorShaft = document.querySelector('.elevator-shaft');
             if (elevatorShaft) {
                 obstacle.draw(elevatorShaft);
@@ -784,16 +759,14 @@ function generateObstacle() {
         }
     }
 }
-
-// Create the obstacle generation interval
 function createObstacleInterval() {
-    // Generate an initial obstacle right away
+    
     generateObstacle();
     
     gameState.obstacleInterval = setInterval(() => {
         if (!gameState.gameActive) return;
         
-        // Debug info to see obstacles
+        
         console.log(`Current obstacles: ${gameState.obstacles.length}, Descent speed: ${gameState.descentSpeed.toFixed(1)}`);
         if (gameState.obstacles.length > 0) {
             console.log(`First obstacle y: ${gameState.obstacles[0].y.toFixed(1)}%, isInDOM: ${gameState.obstacles[0].isInDOM}`);
@@ -814,8 +787,6 @@ function createObstacleInterval() {
         }
     }, 250);
 }
-
-// Setup increasing difficulty over time
 function setupDifficultyProgression() {
     gameState.difficultyTimer = setInterval(() => {
         if (!gameState.gameActive) return;
@@ -823,8 +794,8 @@ function setupDifficultyProgression() {
         gameState.difficultyLevel += 0.3;
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
-        // Increase leviathan speed as difficulty increases, but very slowly
-        gameState.leviathanSpeed += 0.002; // Reduced from 0.003
+        
+        gameState.leviathanSpeed += 0.002; 
         
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
@@ -835,10 +806,8 @@ function setupDifficultyProgression() {
         }
     }, 18000);
 }
-
-// Collision detection - modified to ignore obstacles when phasing
 function checkCollisions() {
-    // Skip collision check if player already recently collided or is phasing
+    
     if (gameState.recentlyCollided || gameState.isPhasing) {
         return;
     }
@@ -853,16 +822,16 @@ function checkCollisions() {
             gameState.shaftWidth,
             gameState.shaftHeight
         )) {
-            // Add debugging to show which obstacle is causing collision
+            
             console.log(`Collision detected with obstacle at y=${obstacle.y}%, gapPosition=${obstacle.gapPosition}%`);
             console.log(`Elevator position: x=${gameState.elevatorX}%, width=${gameState.elevatorWidth}px`);
             
-            // Highlight the colliding obstacle for debugging
+            
             if (obstacle.isInDOM) {
                 obstacle.leftElement.style.backgroundColor = 'red';
                 obstacle.rightElement.style.backgroundColor = 'red';
                 
-                // Reset color after a short delay
+                
                 setTimeout(() => {
                     obstacle.leftElement.style.backgroundColor = '';
                     obstacle.rightElement.style.backgroundColor = '';
@@ -874,7 +843,7 @@ function checkCollisions() {
     });
     
     if (collision) {
-        // Flash the background to indicate collision
+        
         const elevatorShaft = document.querySelector('.elevator-shaft');
         if (elevatorShaft) {
             elevatorShaft.classList.add('collision');
@@ -883,24 +852,22 @@ function checkCollisions() {
             }, 300);
         }
         
-        // Slow down the player
+        
         gameState.descentSpeed = Math.max(gameState.minSpeed, gameState.descentSpeed / gameState.collisionSlowdownFactor);
         
-        // Set collision state
+        
         gameState.recentlyCollided = true;
         gameState.collisionCooldown = gameState.maxCollisionCooldown;
         
-        // Decrease leviathan distance (leviathan gets closer)
-        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 3); // Reduced from 5 to 3
         
-        // If leviathan catches player, end the game
+        gameState.leviathanDistance = Math.max(0, gameState.leviathanDistance - 3); 
+        
+        
         if (gameState.leviathanDistance <= 0) {
             endGame();
         }
     }
 }
-
-// Update the phase power display (formerly brake power)
 function updatePhasePowerDisplay(phasePower, maxPhasePower, descentSpeed, phasePowerRegenSpeedThreshold) {
     const phasePowerBar = document.getElementById('brakePowerBar');
     if (phasePowerBar) {
@@ -910,9 +877,9 @@ function updatePhasePowerDisplay(phasePower, maxPhasePower, descentSpeed, phaseP
         if (powerPercentage < 25) {
             phasePowerBar.style.backgroundColor = 'var(--danger-color)';
         } else if (powerPercentage < 50) {
-            phasePowerBar.style.backgroundColor = '#8a2be2'; // Purple for phase power
+            phasePowerBar.style.backgroundColor = '#8a2be2'; 
         } else {
-            phasePowerBar.style.backgroundColor = '#00bfff'; // Blue for phase power
+            phasePowerBar.style.backgroundColor = '#00bfff'; 
         }
         
         if (descentSpeed > 20) {
@@ -940,8 +907,6 @@ function updatePhasePowerDisplay(phasePower, maxPhasePower, descentSpeed, phaseP
         }
     }
 }
-
-// Update visuals for phasing state (formerly braking)
 function updatePhasingVisuals(isPhasing, canPhase) {
     const body = document.body;
     const elevatorShaft = document.querySelector('.elevator-shaft');
@@ -954,8 +919,6 @@ function updatePhasingVisuals(isPhasing, canPhase) {
         body.classList.remove('phasing');
     }
 }
-
-// Function to create bubbles when phasing
 function createBubble(elevator) {
     const elevatorShaft = document.querySelector('.elevator-shaft');
     if (!elevatorShaft || !elevator) return;
@@ -963,65 +926,63 @@ function createBubble(elevator) {
     const bubble = document.createElement('div');
     bubble.className = 'bubble-particle';
     
-    // Get elevator position
+    
     const elevatorRect = elevator.getBoundingClientRect();
     const shaftRect = elevatorShaft.getBoundingClientRect();
     
-    // Position bubble beneath submarine
+    
     const bubbleX = (elevatorRect.left + elevatorRect.right) / 2 - shaftRect.left;
     const bubbleY = elevatorRect.bottom - 10 - shaftRect.top;
     
     bubble.style.left = `${bubbleX}px`;
     bubble.style.top = `${bubbleY}px`;
     
-    // Randomize bubble properties slightly
+    
     bubble.style.width = `${4 + Math.random() * 4}px`;
     bubble.style.height = bubble.style.width;
     bubble.style.opacity = `${0.6 + Math.random() * 0.4}`;
     
-    // Add bubble to shaft
+    
     elevatorShaft.appendChild(bubble);
     
-    // Remove bubble after animation completes
+    
     setTimeout(() => {
         if (bubble.parentNode) {
             bubble.parentNode.removeChild(bubble);
         }
     }, 2000);
 }
-
-// Add a new function to update submarine orientation
 function updateSubmarineOrientation() {
     const elevator = document.getElementById('elevator');
     if (!elevator) return;
     
-    // Calculate movement direction and magnitude
+    
     const xDiff = gameState.elevatorX - gameState.lastElevatorX;
     
-    // Calculate target rotation based on movement
-    // When moving right, rotate clockwise (positive angle)
-    // When moving left, rotate counter-clockwise (negative angle)
+    
+    
+    
     const targetRotation = xDiff * gameState.maxRotation;
     
-    // Smoothly interpolate current rotation towards target
+    
     gameState.elevatorRotation += (targetRotation - gameState.elevatorRotation) * gameState.rotationSpeed;
     
-    // Gradually return to vertical when not moving horizontally
+    
     if (Math.abs(xDiff) < 0.01 && Math.abs(gameState.elevatorRotation) > 0.1) {
-        gameState.elevatorRotation *= 0.9; // Gradually reduce rotation
+        gameState.elevatorRotation *= 0.9; 
     }
     
-    // Apply rotation transform
+    
     elevator.style.transform = `translate(-50%, -50%) rotate(${gameState.elevatorRotation}deg)`;
     
-    // Set CSS custom property for animations to use
+    
     elevator.style.setProperty('--current-rotation', `${gameState.elevatorRotation}deg`);
     
-    // Add "moving" class if there's significant movement
+    
     if (Math.abs(xDiff) > 0.05) {
         elevator.classList.add('moving');
         
-        // Create propulsion trail if it doesn't exist
+        
         if (!elevator.querySelector('.propulsion-trail')) {
             const trail = document.createElement('div');
             trail.className = 'propulsion-trail';
@@ -1031,11 +992,9 @@ function updateSubmarineOrientation() {
         elevator.classList.remove('moving');
     }
     
-    // Update last position for next frame
+    
     gameState.lastElevatorX = gameState.elevatorX;
 }
-
-// Export game functions
 export { 
     initGame,
     gameState

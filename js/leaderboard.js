@@ -1,6 +1,4 @@
-// Leaderboard handling functionality
 let leaderboard = [];
-
 function loadLeaderboard() {
     const savedLeaderboard = localStorage.getItem('deepDescentLeaderboard');
     if (savedLeaderboard) {
@@ -11,7 +9,6 @@ function loadLeaderboard() {
         }
     }
 }
-
 function saveLeaderboard() {
     try {
         localStorage.setItem('deepDescentLeaderboard', JSON.stringify(leaderboard));
@@ -19,7 +16,6 @@ function saveLeaderboard() {
         console.error('Failed to save leaderboard:', e);
     }
 }
-
 function displayLeaderboard() {
     const leaderboardList = document.getElementById('leaderboardList');
     leaderboardList.innerHTML = '';
@@ -59,7 +55,6 @@ function displayLeaderboard() {
         leaderboardList.appendChild(entryElement);
     });
 }
-
 function checkHighScore(playerName, depth) {
     if (!playerName.trim()) return false;
     
@@ -83,7 +78,6 @@ function checkHighScore(playerName, depth) {
     
     return playerRank < 10;
 }
-
 export { 
     loadLeaderboard, 
     saveLeaderboard, 

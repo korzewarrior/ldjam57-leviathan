@@ -168,5 +168,4 @@ class Obstacle {
     }
 }
 
-// Export the classes for use in other modules
 export { Particle, Obstacle }; 

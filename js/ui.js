@@ -1,15 +1,10 @@
-// UI management functions
 import { checkHighScore, displayLeaderboard } from './leaderboard.js';
-
-// Update the depth display with current depth
 function updateDepthDisplay(currentDepth) {
     const currentDepthDisplay = document.getElementById('currentDepth');
     if (currentDepthDisplay) {
         currentDepthDisplay.textContent = Math.floor(currentDepth);
     }
 }
-
-// Update the phase power display (renamed from brake power)
 function updateBrakePowerDisplay(phasePower, maxPhasePower, descentSpeed, phasePowerRegenSpeedThreshold) {
     const phasePowerBar = document.getElementById('brakePowerBar');
     if (phasePowerBar) {
@@ -19,9 +14,9 @@ function updateBrakePowerDisplay(phasePower, maxPhasePower, descentSpeed, phaseP
         if (powerPercentage < 25) {
             phasePowerBar.style.backgroundColor = 'var(--danger-color)';
         } else if (powerPercentage < 50) {
-            phasePowerBar.style.backgroundColor = '#8a2be2'; // Purple for phase power
+            phasePowerBar.style.backgroundColor = '#8a2be2'; 
         } else {
-            phasePowerBar.style.backgroundColor = '#00bfff'; // Blue for phase power
+            phasePowerBar.style.backgroundColor = '#00bfff'; 
         }
         
         if (descentSpeed > 20) {
@@ -49,8 +44,6 @@ function updateBrakePowerDisplay(phasePower, maxPhasePower, descentSpeed, phaseP
         }
     }
 }
-
-// Update visuals for phasing state (renamed from braking)
 function updateBrakingVisuals(isPhasing, canPhase) {
     const body = document.body;
     const elevatorShaft = document.querySelector('.elevator-shaft');
@@ -63,8 +56,6 @@ function updateBrakingVisuals(isPhasing, canPhase) {
         body.classList.remove('phasing');
     }
 }
-
-// Show the welcome screen
 function showWelcomeScreen() {
     const welcomeScreen = document.getElementById('welcomeScreen');
     const gameScreen = document.getElementById('gameScreen');
@@ -74,8 +65,6 @@ function showWelcomeScreen() {
     gameScreen.classList.add('hidden');
     resultsScreen.classList.add('hidden');
 }
-
-// Show the game screen
 function showGameScreen() {
     const welcomeScreen = document.getElementById('welcomeScreen');
     const gameScreen = document.getElementById('gameScreen');
@@ -85,8 +74,6 @@ function showGameScreen() {
     gameScreen.classList.remove('hidden');
     resultsScreen.classList.add('hidden');
 }
-
-// Show the results screen
 function showResultsScreen(playerName, currentDepth) {
     const gameScreen = document.getElementById('gameScreen');
     const resultsScreen = document.getElementById('resultsScreen');
@@ -108,15 +95,13 @@ function showResultsScreen(playerName, currentDepth) {
     
     displayLeaderboard();
 }
-
-// Update debug visuals when debug mode is active
 function updateDebugVisuals(gameState, elevatorShaft) {
     const existingDebugElements = document.querySelectorAll('.debug-box');
     existingDebugElements.forEach(element => element.remove());
     
     if (!gameState.debugMode) return;
     
-    // Debug box for elevator
+    
     const elevatorDebug = document.createElement('div');
     elevatorDebug.className = 'debug-box debug-elevator';
     
@@ -132,7 +117,7 @@ function updateDebugVisuals(gameState, elevatorShaft) {
     
     elevatorShaft.appendChild(elevatorDebug);
     
-    // Debug boxes for obstacles
+    
     gameState.obstacles.forEach(obstacle => {
         const obstacleY = (obstacle.y / 100) * gameState.shaftHeight;
         const gapLeft = (obstacle.gapPosition / 100) * gameState.shaftWidth;
@@ -148,7 +133,6 @@ function updateDebugVisuals(gameState, elevatorShaft) {
         elevatorShaft.appendChild(gapDebug);
     });
 }
-
 export {
     updateDepthDisplay,
     updateBrakePowerDisplay,
