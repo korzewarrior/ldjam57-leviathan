@@ -571,23 +571,6 @@ button:hover {
     }
 }
 
-.game-instructions {
-    position: relative;
-    bottom: auto;
-    left: 0;
-    right: 0;
-    text-align: center;
-    padding: 6px;
-    font-size: 0.8rem;
-    color: var(--accent-color);
-    background-color: rgba(10, 10, 18, 0.7);
-    border-bottom: 1px solid var(--accent-color);
-    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
-    z-index: 10;
-    max-width: none;
-    margin: 0;
-}
-
 .leaderboard {
     margin-top: 20px;
     width: 100%;
