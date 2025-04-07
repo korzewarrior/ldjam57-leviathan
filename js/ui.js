@@ -108,7 +108,7 @@ function updateDebugVisuals(gameState, elevatorShaft) {
     const elevatorWidthPx = gameState.elevatorWidth;
     const elevatorHeightPx = gameState.elevatorHeight;
     const elevatorXPx = (gameState.elevatorX / 100) * gameState.shaftWidth;
-    const elevatorYPx = (30 / 100) * gameState.shaftHeight;
+    const elevatorYPx = (25 / 100) * gameState.shaftHeight;
     
     elevatorDebug.style.width = `${elevatorWidthPx}px`;
     elevatorDebug.style.height = `${elevatorHeightPx}px`;
