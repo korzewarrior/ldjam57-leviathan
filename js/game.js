@@ -244,7 +244,7 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
         gameState.leviathanElement.classList.remove('approaching');
         gameState.leviathanElement.classList.remove('close');
         gameState.leviathanElement.style.bottom = '';
-        gameState.leviathanElement.style.top = '-20%';
+        gameState.leviathanElement.style.top = '-15%';
     }
     
     updateShaftDimensions(elevatorShaft);
@@ -562,7 +562,7 @@ function updateLeviathan(frameCount) {
         
         if (gameState.leviathanElement) {
             
-            gameState.leviathanElement.style.top = '-10%'; 
+            gameState.leviathanElement.style.top = '5%';
             gameState.leviathanElement.style.bottom = 'auto'; 
         }
         
@@ -576,7 +576,7 @@ function updateLeviathan(frameCount) {
         
         
         
-        const topPosition = -10 - (normalizedDistance * 40); 
+        const topPosition = 5 - (normalizedDistance * 55);
         
         
         gameState.leviathanElement.style.bottom = 'auto';

@@ -867,7 +867,7 @@ button:hover {
     position: absolute;
     width: 120px;
     height: 80px;
-    top: -20%;
+    top: -15%;
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(114, 9, 183, 0.7);
@@ -875,7 +875,7 @@ button:hover {
     border: 2px solid rgba(114, 9, 183, 1);
     box-shadow: 0 0 20px rgba(114, 9, 183, 0.7);
     z-index: 3;
-    transition: top 0.5s ease-out, box-shadow 0.3s, border-color 0.3s;
+    transition: top 0.8s cubic-bezier(0.17, 0.67, 0.35, 1.2), box-shadow 0.3s, border-color 0.3s, transform 0.5s;
     background-image: linear-gradient(
         to bottom,
         rgba(114, 9, 183, 0.9) 0%,
@@ -954,6 +954,7 @@ button:hover {
     box-shadow: 0 0 25px rgba(255, 60, 90, 0.8);
     border-color: rgba(255, 60, 90, 1);
     animation: closePulse 0.5s infinite alternate;
+    transform: translateX(-50%) scale(1.1);
 }
 
 @keyframes approachPulse {
@@ -962,8 +963,36 @@ button:hover {
 }
 
 @keyframes closePulse {
-    0% { background-color: rgba(114, 9, 183, 0.7); }
-    100% { background-color: rgba(255, 60, 90, 0.7); }
+    0% { 
+        background-color: rgba(114, 9, 183, 0.7);
+        box-shadow: 0 0 25px rgba(255, 60, 90, 0.6);
+    }
+    100% { 
+        background-color: rgba(255, 60, 90, 0.7);
+        box-shadow: 0 0 40px rgba(255, 60, 90, 0.9);
+    }
+}
+
+.leviathan.close::before {
+    animation: tentacleWaveFast 1s ease-in-out infinite;
+}
+
+.leviathan.close::after {
+    animation: tentacleWaveFast 1s ease-in-out infinite reverse;
+}
+
+.leviathan.close .middle-tentacle {
+    animation: middleTentacleWaveFast 1.5s ease-in-out infinite;
+}
+
+@keyframes tentacleWaveFast {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(25deg); }
+}
+
+@keyframes middleTentacleWaveFast {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    50% { transform: translateX(-50%) rotate(20deg); }
 }
 
 .elevator-shaft.collision {
