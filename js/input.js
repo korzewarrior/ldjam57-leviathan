@@ -83,6 +83,14 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
             if (elevator) {
                 elevator.classList.add('phasing');
                 elevator.classList.remove('normalizing-speed');
+                
+                // Add or update the trail element
+                let trail = elevator.querySelector('.trail');
+                if (!trail) {
+                    trail = document.createElement('div');
+                    trail.className = 'trail';
+                    elevator.appendChild(trail);
+                }
             }
             
             if (e.touches.length > 0) {
@@ -99,6 +107,12 @@ function setupInputHandlers(gameState, elevatorShaft, elevator) {
         // Remove phase effect from elevator
         if (elevator) {
             elevator.classList.remove('phasing');
+            
+            // Remove trail element
+            const trail = elevator.querySelector('.trail');
+            if (trail) {
+                elevator.removeChild(trail);
+            }
         }
     });
 

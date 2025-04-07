@@ -127,6 +127,14 @@ function initGame() {
             if (elevator) {
                 elevator.classList.add('phasing');
                 elevator.classList.remove('normalizing-speed');
+                
+                // Add or update the trail element
+                let trail = elevator.querySelector('.trail');
+                if (!trail) {
+                    trail = document.createElement('div');
+                    trail.className = 'trail';
+                    elevator.appendChild(trail);
+                }
             }
         }
     });
@@ -138,6 +146,12 @@ function initGame() {
         const elevator = document.getElementById('elevator');
         if (elevator) {
             elevator.classList.remove('phasing');
+            
+            // Remove trail element
+            const trail = elevator.querySelector('.trail');
+            if (trail) {
+                elevator.removeChild(trail);
+            }
         }
     });
     
@@ -515,7 +529,7 @@ function updateLeviathan(frameCount) {
         // Set final position for leviathan
         if (gameState.leviathanElement) {
             // Fix the position to ensure it stays above the player
-            gameState.leviathanElement.style.top = '10%'; // Changed from 15% to 10%
+            gameState.leviathanElement.style.top = '0%'; // Changed from 10% to 0% to position the Leviathan higher
             gameState.leviathanElement.style.bottom = 'auto'; // Ensure bottom is not set
         }
         
@@ -527,9 +541,9 @@ function updateLeviathan(frameCount) {
     if (frameCount % 4 === 0 && gameState.leviathanElement) {
         const normalizedDistance = gameState.leviathanDistance / gameState.maxLeviathanDistance;
         // Convert normalized distance to visual position
-        // When distance is 0, top should be 10% (caught) - changed from 15%
+        // When distance is 0, top should be 0% (caught) - changed from 10%
         // When distance is 100, top should be -20% (far away)
-        const topPosition = 10 - (normalizedDistance * 30); // Changed from 15/35 to 10/30
+        const topPosition = 0 - (normalizedDistance * 20); // Changed from 10/30 to 0/20
         
         // Position from the top instead of bottom, and ensure bottom is not set
         gameState.leviathanElement.style.bottom = 'auto';
