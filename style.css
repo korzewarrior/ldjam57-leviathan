@@ -2,6 +2,8 @@
 
 :root {
     --bg-color: #0a0a12;
+    --bg-gradient-top: #05253d;
+    --bg-gradient-bottom: #0a0a25;
     --text-color: #ffffff;
     --accent-color: #00c8ff;
     --danger-color: #ff3c5a;
@@ -12,13 +14,15 @@
     --phase-color: #00bfff;
     --phase-alt-color: #8a2be2;
     --background-color: #222;
-    --shaft-color: #1a1a1a;
+    --shaft-color: #0a1a2f;
     --elevator-color: #555;
     --leviathan-color: #7209b7;
     --brake-color: #ff6600;
     --submarine-color: #345995;
     --submarine-window: #89CFF0;
     --submarine-detail: #1A2930;
+    --bubble-color: #89CFF0;
+    --water-overlay: rgba(10, 50, 90, 0.05);
 }
 
 * {
@@ -36,7 +40,7 @@ html, body {
 
 body {
     font-family: 'Roboto Mono', monospace;
-    background-color: var(--bg-color);
+    background: linear-gradient(to bottom, var(--bg-gradient-top), var(--bg-gradient-bottom));
     color: var(--text-color);
     display: flex;
     flex-direction: column;
@@ -47,6 +51,29 @@ body {
     margin: 0 auto;
     padding: 20px;
     position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            var(--water-overlay),
+            transparent 200px
+        );
+    pointer-events: none;
+    z-index: -1;
+    animation: waterShimmer 15s linear infinite;
+}
+
+@keyframes waterShimmer {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 200px; }
 }
 
 body.braking {
@@ -70,9 +97,9 @@ body.phasing {
     margin: 0 auto;
     border: 2px solid var(--accent-color);
     border-radius: 5px;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(5, 20, 40, 0.4);
     overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
 }
 
 .welcome-screen, .game-screen, .results-screen {
@@ -235,12 +262,27 @@ button:hover {
     transition: background-color 0.3s, box-shadow 0.3s;
     background-image: 
         linear-gradient(0deg, 
-            rgba(10, 10, 18, 0.6) 0%, 
-            rgba(10, 10, 18, 0.2) 20%, 
-            rgba(10, 10, 18, 0) 50%, 
-            rgba(10, 10, 18, 0.2) 80%, 
-            rgba(10, 10, 18, 0.6) 100%);
+            rgba(5, 30, 60, 0.6) 0%, 
+            rgba(10, 40, 70, 0.2) 20%, 
+            rgba(15, 50, 80, 0.1) 50%, 
+            rgba(10, 40, 70, 0.2) 80%, 
+            rgba(5, 30, 60, 0.6) 100%);
     cursor: none;
+}
+
+.elevator-shaft::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0, 150, 255, 0.05) 0%,
+        rgba(0, 0, 0, 0) 70%
+    );
+    pointer-events: none;
 }
 
 .elevator-shaft.braking {
@@ -255,6 +297,41 @@ button:hover {
             rgba(42, 21, 0, 0.6) 100%);
 }
 
+.elevator-shaft::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><filter id="f"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="1" /><feDisplacementMap in="SourceGraphic" scale="20" /></filter><rect width="100%" height="100%" fill="rgba(0,120,255,0.05)" filter="url(%23f)" /></svg>');
+    background-size: 100% 100%;
+    pointer-events: none;
+    opacity: 0.15;
+    animation: caustics 20s linear infinite;
+}
+
+@keyframes caustics {
+    0% {
+        background-position: 0% 0%;
+        opacity: 0.15;
+    }
+    25% {
+        opacity: 0.12;
+    }
+    50% {
+        background-position: 20% 80%;
+        opacity: 0.18;
+    }
+    75% {
+        opacity: 0.13;
+    }
+    100% {
+        background-position: 0% 0%;
+        opacity: 0.15;
+    }
+}
+
 .elevator {
     position: absolute;
     width: 40px;
@@ -266,8 +343,14 @@ button:hover {
     top: 10%;
     transform: translate(-50%, -50%) rotate(0deg);
     transition: transform 0.1s ease-out, box-shadow 0.3s, border-color 0.3s;
-    box-shadow: 0 0 5px rgba(52, 89, 149, 0.5);
+    box-shadow: 0 0 10px rgba(52, 89, 149, 0.6);
     z-index: 2;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(52, 89, 149, 1) 0%,
+        rgba(45, 75, 128, 0.9) 50%,
+        rgba(52, 89, 149, 1) 100%
+    );
 }
 
 .elevator::before {
@@ -281,8 +364,9 @@ button:hover {
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    box-shadow: 0 0 5px rgba(137, 207, 240, 0.5) inset;
+    box-shadow: 0 0 8px rgba(137, 207, 240, 0.6) inset;
     transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    animation: viewportPulse 4s ease-in-out infinite;
 }
 
 .elevator::after {
@@ -303,83 +387,64 @@ button:hover {
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
     background-color: rgba(0, 191, 255, 0.7);
     border-color: #8a2be2;
-    animation: phaseEffect 0.5s infinite alternate;
+    animation: phaseEffect 0.3s infinite alternate;
 }
 
-.elevator.phasing::before {
-    background-color: rgba(0, 191, 255, 0.9);
+.elevator.phasing::before, .elevator.phasing::after {
     border-color: #8a2be2;
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.7) inset;
-}
-
-.elevator.phasing::after {
-    background-color: rgba(138, 43, 226, 0.8);
+    animation: viewportPulse 0.5s infinite alternate;
 }
 
 @keyframes viewportPulse {
     0% { box-shadow: 0 0 5px rgba(137, 207, 240, 0.5) inset; }
-    100% { box-shadow: 0 0 10px rgba(137, 207, 240, 0.8) inset; }
+    100% { box-shadow: 0 0 15px rgba(0, 191, 255, 0.8) inset; }
 }
 
-@keyframes bubbleEmit {
+@keyframes phaseEffect {
     0% {
-        opacity: 0;
-        transform: translateY(0) scale(0.5);
-    }
-    50% {
-        opacity: 1;
-        transform: translateY(-10px) scale(1);
+        opacity: 0.7;
+        transform: translate(-50%, -50%) rotate(var(--current-rotation, 0deg)) scale(0.95);
+        box-shadow: 0 0 15px rgba(0, 150, 255, 0.6);
     }
     100% {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.5);
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(var(--current-rotation, 0deg)) scale(1.05);
+        box-shadow: 0 0 25px rgba(138, 43, 226, 0.8);
     }
 }
 
 .elevator.phasing .trail {
     position: absolute;
-    width: 150%;
-    height: 80px;
-    left: -25%;
-    bottom: -80px;
-    background: radial-gradient(
-        ellipse at center, 
-        rgba(0, 191, 255, 0.7) 0%, 
-        rgba(138, 43, 226, 0.3) 50%, 
-        rgba(138, 43, 226, 0) 70%
+    width: 60px;
+    height: 120px;
+    left: 50%;
+    bottom: -120px;
+    transform: translateX(-50%);
+    background: linear-gradient(to top, 
+        rgba(138, 43, 226, 0) 0%,
+        rgba(138, 43, 226, 0.2) 30%,
+        rgba(0, 191, 255, 0.4) 60%,
+        rgba(0, 191, 255, 0.2) 90%,
+        rgba(0, 191, 255, 0.1) 100%
     );
-    animation: phaseTrailVertical 0.8s infinite;
+    animation: phaseTrail 0.8s infinite;
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
+    border-radius: 50% 50% 0 0 / 20% 20% 0 0;
 }
 
-@keyframes phaseTrailVertical {
-    0% {
-        opacity: 0.7;
-        transform: translateY(0);
+@keyframes phaseTrail {
+    0% { 
+        height: 120px; 
+        opacity: 0.7; 
+        transform: translateX(-50%) scaleX(1);
     }
-    100% {
-        opacity: 0;
-        transform: translateY(60px);
+    50% {
+        transform: translateX(-50%) scaleX(1.1);
     }
-}
-
-.bubble-particle {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background-color: rgba(137, 207, 240, 0.8);
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(137, 207, 240, 0.5);
-    animation: bubbleFloat 2s ease-out forwards;
-}
-
-@keyframes bubbleFloat {
-    0% {
-        transform: translateY(0) translateX(0) scale(1);
-        opacity: 0.8;
-    }
-    100% {
-        transform: translateY(-100px) translateX(var(--float-x, 20px)) scale(0.5);
-        opacity: 0;
+    100% { 
+        height: 200px; 
+        opacity: 0; 
+        transform: translateX(-50%) scaleX(0.9);
     }
 }
 
@@ -404,42 +469,6 @@ button:hover {
     border-color: #8a2be2;
 }
 
-@keyframes phaseEffect {
-    0% {
-        opacity: 0.7;
-        transform: translate(-50%, -50%) rotate(var(--current-rotation, 0deg)) scale(0.95);
-    }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) rotate(var(--current-rotation, 0deg)) scale(1.05);
-    }
-}
-
-.elevator.phasing .trail {
-    position: absolute;
-    width: 60px;
-    height: 120px;
-    left: 50%;
-    bottom: -120px;
-    transform: translateX(-50%);
-    background: linear-gradient(to top, 
-        rgba(138, 43, 226, 0) 0%,
-        rgba(138, 43, 226, 0.2) 30%,
-        rgba(0, 191, 255, 0.4) 60%,
-        rgba(0, 191, 255, 0.1) 100%
-    );
-    animation: phaseTrail 0.8s infinite;
-}
-
-@keyframes phaseTrail {
-    0% { height: 120px; opacity: 0.7; }
-    100% { height: 200px; opacity: 0; }
-}
-
-.elevator.normalizing-speed {
-    animation: normalizingPulse 0.5s infinite alternate;
-}
-
 @keyframes normalizingPulse {
     0% {
         box-shadow: 0 0 5px rgba(52, 89, 149, 0.5);
@@ -450,40 +479,62 @@ button:hover {
 }
 
 .elevator-shaft.phasing {
-    background-color: #000a29;
-    box-shadow: inset 0 0 30px rgba(0, 191, 255, 0.3);
+    background-color: #001a3a;
+    box-shadow: inset 0 0 40px rgba(0, 191, 255, 0.35);
     background-image: 
         linear-gradient(0deg, 
-            rgba(0, 10, 41, 0.6) 0%, 
-            rgba(0, 10, 41, 0.2) 20%, 
-            rgba(0, 10, 41, 0) 50%, 
-            rgba(0, 10, 41, 0.2) 80%, 
-            rgba(0, 10, 41, 0.6) 100%);
+            rgba(0, 30, 70, 0.7) 0%, 
+            rgba(0, 20, 55, 0.3) 20%, 
+            rgba(0, 10, 41, 0.1) 50%, 
+            rgba(0, 20, 55, 0.3) 80%, 
+            rgba(0, 30, 70, 0.7) 100%);
     border-color: #8a2be2;
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(2px);
 }
 
 .obstacle {
     position: absolute;
     height: 15px;
     background-color: var(--obstacle-color);
-    box-shadow: 0 0 8px rgba(255, 60, 90, 0.5);
+    box-shadow: 0 0 12px rgba(255, 60, 90, 0.6);
     border-radius: 0;
     z-index: 1;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(255, 60, 90, 0.9) 0%,
+        rgba(255, 30, 70, 0.7) 50%,
+        rgba(255, 60, 90, 0.9) 100%
+    );
+    border-top: 1px solid rgba(255, 100, 120, 0.8);
+    border-bottom: 1px solid rgba(200, 30, 60, 0.8);
 }
 
 .particle {
     position: absolute;
     width: 3px;
     height: 3px;
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(137, 207, 240, 0.4);
     border-radius: 50%;
     animation: float 10s linear infinite;
+    box-shadow: 0 0 2px rgba(0, 191, 255, 0.3);
 }
 
 @keyframes float {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-100vh); }
+    0% { 
+        transform: translateY(0) translateX(0); 
+    }
+    25% {
+        transform: translateY(-25vh) translateX(5px);
+    }
+    50% {
+        transform: translateY(-50vh) translateX(-5px);
+    }
+    75% {
+        transform: translateY(-75vh) translateX(5px);
+    }
+    100% { 
+        transform: translateY(-100vh) translateX(0); 
+    }
 }
 
 .game-instructions {
@@ -702,9 +753,11 @@ button:hover {
     align-items: center;
     justify-content: space-between;
     padding: 10px;
-    background-color: var(--panel-color);
+    background-color: rgba(18, 18, 44, 0.9);
     border-bottom: 1px solid var(--accent-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    position: relative;
+    z-index: 5;
 }
 
 .brake-power-container {
@@ -820,9 +873,15 @@ button:hover {
     background-color: rgba(114, 9, 183, 0.7);
     border-radius: 10px 10px 40px 40px;
     border: 2px solid rgba(114, 9, 183, 1);
-    box-shadow: 0 0 15px rgba(114, 9, 183, 0.6);
+    box-shadow: 0 0 20px rgba(114, 9, 183, 0.7);
     z-index: 3;
     transition: top 0.5s ease-out, box-shadow 0.3s, border-color 0.3s;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(114, 9, 183, 0.9) 0%,
+        rgba(90, 7, 150, 0.7) 50%,
+        rgba(114, 9, 183, 0.9) 100%
+    );
 }
 
 .leviathan::before,
@@ -831,9 +890,15 @@ button:hover {
     position: absolute;
     background-color: rgba(114, 9, 183, 0.7);
     border: 2px solid rgba(114, 9, 183, 1);
-    box-shadow: 0 0 10px rgba(114, 9, 183, 0.4);
+    box-shadow: 0 0 15px rgba(114, 9, 183, 0.5);
     border-radius: 5px 5px 30px 30px;
     transition: transform 0.5s ease-out;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(114, 9, 183, 0.9) 0%,
+        rgba(90, 7, 150, 0.7) 50%,
+        rgba(114, 9, 183, 0.9) 100%
+    );
 }
 
 .leviathan::before {
@@ -960,11 +1025,11 @@ button:hover {
     transform: translateX(-50%) rotate(var(--current-rotation, 0deg));
     background: radial-gradient(
         ellipse at top, 
-        rgba(0, 191, 255, 0.5) 0%, 
-        rgba(0, 191, 255, 0.3) 40%, 
+        rgba(0, 191, 255, 0.6) 0%, 
+        rgba(0, 191, 255, 0.4) 40%, 
         rgba(0, 191, 255, 0) 80%
     );
-    opacity: 0.5;
+    opacity: 0.6;
     transition: height 0.3s, opacity 0.3s, background 0.3s;
 }
 
@@ -996,16 +1061,6 @@ button:hover {
     }
 }
 
-.bubble-particle {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background-color: rgba(0, 191, 255, 0.8);
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
-    animation: bubbleFloat 2s ease-out forwards;
-}
-
 .elevator.phasing + .bubble-particle {
     background-color: rgba(138, 43, 226, 0.8);
     box-shadow: 0 0 8px rgba(138, 43, 226, 0.6);
@@ -1017,4 +1072,29 @@ button:hover {
     background-color: rgba(0, 191, 255, 0.7);
     border-color: #8a2be2;
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
+}
+
+.bubble-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: rgba(137, 207, 240, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 191, 255, 0.6);
+    animation: bubbleFloat 2s ease-out forwards;
+}
+
+@keyframes bubbleFloat {
+    0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-50px) translateX(calc(var(--float-x, 5px) * 0.5)) scale(0.8);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translateY(-100px) translateX(var(--float-x, 10px)) scale(0.5);
+        opacity: 0;
+    }
 } 
