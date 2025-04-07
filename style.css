@@ -263,8 +263,8 @@ button:hover {
     border: 2px solid #2d4b80;
     border-radius: 10px;
     left: 50%;
-    top: 10%;
-    transform: translate(-50%, -50%) rotate(0deg);
+    bottom: 20%;
+    transform: translate(-50%, 50%) rotate(0deg);
     transition: transform 0.1s ease-out, box-shadow 0.3s, border-color 0.3s;
     box-shadow: 0 0 5px rgba(52, 89, 149, 0.5);
     z-index: 2;

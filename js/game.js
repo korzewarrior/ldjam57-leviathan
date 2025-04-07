@@ -79,7 +79,7 @@ function initGame() {
     
     try {
         gameState.phaseSound = new Audio();
-        gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yboq
+        gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YboqAAABAAEAKysDA/n5dXUICAYG';
         gameState.phaseSound.volume = 0.5;
     } catch (e) {
         console.error("Could not initialize phase sound", e);
@@ -932,7 +932,7 @@ function createBubble(elevator) {
     
     
     const bubbleX = (elevatorRect.left + elevatorRect.right) / 2 - shaftRect.left;
-    const bubbleY = elevatorRect.bottom - 10 - shaftRect.top;
+    const bubbleY = elevatorRect.top + 10 - shaftRect.top;
     
     bubble.style.left = `${bubbleX}px`;
     bubble.style.top = `${bubbleY}px`;
@@ -960,8 +960,6 @@ function updateSubmarineOrientation() {
     const xDiff = gameState.elevatorX - gameState.lastElevatorX;
     
     
-    
-    
     const targetRotation = xDiff * gameState.maxRotation;
     
     
@@ -973,7 +971,7 @@ function updateSubmarineOrientation() {
     }
     
     
-    elevator.style.transform = `translate(-50%, -50%) rotate(${gameState.elevatorRotation}deg)`;
+    elevator.style.transform = `translate(-50%, 50%) rotate(${gameState.elevatorRotation}deg)`;
     
     
     elevator.style.setProperty('--current-rotation', `${gameState.elevatorRotation}deg`);

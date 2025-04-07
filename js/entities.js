@@ -127,7 +127,7 @@ class Obstacle {
     checkCollision(elevatorX, elevatorWidth, elevatorHeight, shaftWidth, shaftHeight) {
         const elevator = {
             centerX: (elevatorX / 100) * shaftWidth,
-            centerY: (10 / 100) * shaftHeight,
+            centerY: (80 / 100) * shaftHeight,
             width: elevatorWidth,
             height: elevatorHeight
         };
