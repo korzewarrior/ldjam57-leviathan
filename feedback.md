@@ -107,4 +107,67 @@
 
 ### Comparison Notes
 - Similar to Doodle Jump (but vertical)
-- Reminds some players of Alto Adventure (with vertical design) 
+- Reminds some players of Alto Adventure (with vertical design)
+
+## Implementation Plan
+
+Based on the feedback received, here's a prioritized plan for future improvements:
+
+### High Priority (Quick Wins)
+1. **Early Game Tension** - Add occasional glimpses of the Leviathan in the early game to create tension and urgency
+   - Implement brief visual cues of tentacles reaching down from above
+   - Add subtle warning sounds/vibrations when the Leviathan is getting closer
+
+2. **Obstacle Visibility** - Improve player ability to see and react to upcoming obstacles
+   - Increase the visible playing area/FOV vertically
+   - Add subtle visual indicators for upcoming obstacles
+   - Consider a slight reduction in initial descent speed
+
+3. **Tutorial/Onboarding** - Create clearer instructions for new players
+   - Add a brief in-game tutorial explaining controls and objectives
+   - Visual cues for how the boost mechanic works
+   - Explain wall collision mechanics
+
+### Medium Priority (Core Gameplay Enhancements)
+1. **Dynamic Difficulty** - Implement a more engaging difficulty progression
+   - Gradually increase obstacle density and complexity as players descend
+   - Adjust Leviathan speed based on player performance
+   - Create "phases" of difficulty that introduce new challenges
+
+2. **Gameplay Variety** - Add more variety to keep the game fresh
+   - Design 2-3 additional obstacle types with unique behaviors
+   - Add occasional power-ups or bonuses (temporary invincibility, speed boost, etc.)
+   - Create narrow "squeeze" sections that require precision
+
+3. **Polish Audio Experience** - Build on the background music
+   - Optimize SFX performance (implement audio pooling to reduce performance impact)
+   - Add ambient sounds that increase tension with depth
+   - Audio feedback for boost activation and obstacle collisions
+
+### Long-term Improvements (Post-Jam)
+1. **Mobile Compatibility** - Develop touch controls for mobile play
+   - Tilt controls for movement
+   - Touch anywhere to activate boost
+   - Optimize UI for smaller screens
+
+2. **Visual Progression** - Create visual changes as the player descends deeper
+   - Gradual environmental changes (darker, more alien, etc.)
+   - More intimidating obstacle designs at greater depths
+   - Visual milestones to indicate progress
+
+3. **Metagame Elements** - Add progression systems for replayability
+   - Unlockable vessel variants with slightly different handling
+   - Achievement system for completing specific challenges
+   - Daily challenges with unique constraints
+
+### Technical Improvements
+1. **Performance Optimization**
+   - Implement object pooling for obstacles and particles
+   - Optimize collision detection
+   - Find more efficient ways to implement SFX without impacting performance
+
+2. **Remove Debug Elements**
+   - Clean up any remaining debug visuals mentioned in feedback
+   - Ensure a clean, polished player experience
+
+This implementation plan addresses the core feedback while maintaining the simple, addictive nature of the game that players enjoyed. Prioritizing visibility improvements and early game tension will address the most common player concerns, while the medium and long-term improvements can expand the game's depth and replayability. 
