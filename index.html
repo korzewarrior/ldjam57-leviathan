@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Background Music - hidden, autoplay, loop -->
+    <audio id="bgmAudio" loop preload="auto" style="display: none;">
+        <source src="bgm.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="game-container">
         <div class="welcome-screen" id="welcomeScreen">
             <h1>LEVIATHAN</h1>
@@ -84,5 +89,29 @@
     -->
     
     <script type="module" src="js/main.js?v=0406.2151"></script>
+    
+    <!-- Background Music Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bgm = document.getElementById('bgmAudio');
+            bgm.volume = 0.2; // Set a soft volume (0.0 to 1.0)
+            
+            // Play BGM on user interaction (required by most browsers)
+            const playBGM = function() {
+                bgm.play().catch(e => console.log('BGM playback error:', e));
+                // Remove event listeners after first interaction
+                document.removeEventListener('click', playBGM);
+                document.removeEventListener('keydown', playBGM);
+            };
+            
+            // Try to play on page load (might work in some browsers)
+            bgm.play().catch(e => {
+                console.log('Autoplay prevented. Will play on user interaction.');
+                // Add event listeners for user interaction
+                document.addEventListener('click', playBGM);
+                document.addEventListener('keydown', playBGM);
+            });
+        });
+    </script>
 </body>
 </html> 
