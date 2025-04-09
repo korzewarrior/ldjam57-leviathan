@@ -17,7 +17,7 @@ const gameState = {
     descentSpeed: 0,
     normalSpeed: 0,  
     minSpeed: 2,
-    maxSpeed: 60,
+    maxSpeed: 50,
     baseAcceleration: 0.03,
     isPhasing: false,
     phaseBoostActive: false,
@@ -31,7 +31,7 @@ const gameState = {
     maxPhasePower: 100,
     phasePower: 100,
     phasePowerConsumptionRate: 2.2,
-    phasePowerRegenRate: 0.15,
+    phasePowerRegenRate: 0.12,
     phasePowerRegenSpeedThreshold: 6,
     canPhase: true,
     shaftWidth: 0,
@@ -49,10 +49,10 @@ const gameState = {
     lastObstacleTime: 0,
     minObstacleSpacing: 3000,
     movementFactor: 0.15,
-    
     leviathanDistance: 100, 
     maxLeviathanDistance: 100,
-    leviathanSpeed: 0.025, 
+    leviathanSpeed: 0.02,
+    leviathanAcceleration: 0.000035,
     collisionSlowdownFactor: 2.0, 
     recentlyCollided: false,
     collisionCooldown: 0,
@@ -87,7 +87,7 @@ function initGame() {
     try {
         gameState.phaseSound = new Audio();
         gameState.phaseSound.src = 'data:audio/wav;base64,UklGRt4rAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YboqAAABAAEAKysDA/n5dXUICAYG';
-        gameState.phaseSound.volume = 0.5;
+        gameState.phaseSound.volume = 0;
     } catch (e) {
         console.error("Could not initialize phase sound", e);
     }
@@ -386,7 +386,7 @@ function setupGameLoop() {
                 
                 if (gameState.phaseBoostActive) {
                     
-                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.15);
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.12);
                     
                     gameState.phaseBoostDuration--;
                     if (gameState.phaseBoostDuration <= 0) {
@@ -394,7 +394,7 @@ function setupGameLoop() {
                     }
                 } else {
                     
-                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.02);
+                    gameState.descentSpeed = Math.min(gameState.maxSpeed, gameState.descentSpeed * 1.01);
                 }
             } else {
                 
@@ -510,6 +510,8 @@ function updateLeviathan(frameCount) {
     
     let baseApproachRate = gameState.leviathanSpeed;
     
+    // Apply the small acceleration to make Leviathan progressively faster over time
+    gameState.leviathanSpeed += gameState.leviathanAcceleration;
     
     const depthFactor = Math.min(1 + (gameState.currentDepth / 800), 2.0); 
     baseApproachRate *= depthFactor;
@@ -843,8 +845,7 @@ function setupDifficultyProgression() {
         gameState.difficultyLevel += 0.3;
         gameState.minObstacleSpacing = Math.max(1200, 3000 - (gameState.difficultyLevel * 150));
         
-        
-        gameState.leviathanSpeed += 0.002; 
+        gameState.leviathanSpeed += 0.002;
         
         const currentDepthDisplay = document.getElementById('currentDepth');
         if (currentDepthDisplay) {
