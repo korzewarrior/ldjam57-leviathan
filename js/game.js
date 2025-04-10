@@ -279,8 +279,9 @@ function startGame(playerNameInput, playerNameDisplay, elevatorShaft) {
     gameState.phasePower = gameState.maxPhasePower;
     gameState.canPhase = true;
     
-    
+    // Reset Leviathan properties
     gameState.leviathanDistance = gameState.maxLeviathanDistance;
+    gameState.leviathanSpeed = 0.02; // Reset to initial value
     gameState.recentlyCollided = false;
     gameState.collisionCooldown = 0;
     
